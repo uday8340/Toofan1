@@ -97,3 +97,45 @@ public class ContactModel {
         return contacts;
     }
 }
+
+<!-- Contact Us Component HTML -->
+<sly data-sly-use.contactUsModel="com.yourproject.core.models.ContactUsModel">
+    <div class="contact-us-component">
+        <!-- Heading -->
+        <h2 class="contact-us-heading">${contactUsModel.heading @ context='text'}</h2>
+ 
+        <!-- Contact List -->
+        <div class="contact-list">
+            <sly data-sly-list.contacts="${contactUsModel.contactlist}">
+                <div class="contact-item">
+                    <h3 class="contact-item-heading">${contacts.analystName @ context='text'}</h3>
+                    <p class="contact-item-detail">
+                        <strong>Profile:</strong>
+                        <a href="${contacts.analystProfileUrl @ context='uri'}" target="_blank">${contacts.analystProfileUrl @ context='text'}</a>
+                    </p>
+                    <p class="contact-item-detail">
+                        <strong>Email:</strong>
+                        <a href="mailto:${contacts.analystEmail @ context='email'}">${contacts.analystEmail @ context='text'}</a>
+                    </p>
+                    <p class="contact-item-detail">
+                        <strong>Phone:</strong>
+                        <a href="tel:${contacts.analystNumber @ context='phone'}">${contacts.analystNumber @ context='text'}</a>
+                    </p>
+                </div>
+            </sly>
+        </div>
+    </div>
+ 
+    <!-- Layout Check (Optional) -->
+    <sly>
+        <div class="layout-${contactUsModel.contactlist[0].layout @ context='text'}">
+            <!-- You can apply different styles or layouts based on this field's value -->
+            <!-- Example:
+            <sly data-sly-test="${contactUsModel.contactlist[0].layout == 'Horizontal'}">
+                <p>Horizontal Layout Applied</p>
+            </sly>
+            -->
+        </div>
+    </sly>
+</sly>
+has context menu
