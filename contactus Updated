@@ -126,6 +126,37 @@ public class ContactUsModel {
         return contactlist;
     }
 }
+
+
+
+web cast html
+
+<h2>${properties.heading}</h2>
+<div data-sly-list.item="${resource.children}">
+
+    <div data-sly-list.webcasts="${item.children}">
+        <span>${webcasts.authors}</span>
+        <span>${webcasts.datepicker}</span><br>
+        
+        <a href="${webcasts.link @ context='uri'}" 
+           target="${webcasts.externallink ? '_blank' : '_self'}">
+            ${webcasts.linkTitle}
+        </a>
+    </div>
+
+    <div data-sly-list.links="${item.children}">
+        <ul>
+            <li>
+                <a href="${links.linkUri @ context='uri'}">
+                    ${links.linkText}
+                </a>
+                ${links.externalLink ? '' : ''}
+            </li>
+        </ul>
+    </div>
+
+</div>
+
 logger.info - logger Resources and Information.
 logger.info is your first and best source for all of the information you’re looking for. From general topics to more of what you would expect to find here, logger.info has it all. We hope you find ...
  
