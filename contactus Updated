@@ -1,162 +1,127 @@
- 
-@Model(adaptables = Resource.class)
-public class ContactListModel {
- 
-    private static final Logger logger = LoggerFactory.getLogger(ContactListModel.class);
- 
-    @ValueMapValue
-    private String layout;
- 
-    @ValueMapValue(name = "msid")
-    @Default(values = "Default msid")
-    private String msid;
- 
-    @ValueMapValue
-    private String analystName;
- 
-    @ValueMapValue
-    private String analystProfileUrl;
- 
-    @ValueMapValue
-    private String analystEmail;
- 
-    @ValueMapValue
-    private String analystNumber;
- 
-    @PostConstruct
-    protected void init() {
-logger.info("Initializing ContactListModel");
- 
-logger.info("Layout: {}", layout);
-logger.info("MSID: {}", msid);
-logger.info("Analyst Name: {}", analystName);
-logger.info("Analyst Profile URL: {}", analystProfileUrl);
-logger.info("Analyst Email: {}", analystEmail);
-logger.info("Analyst Number: {}", analystNumber);
-    }
- 
-    public String getLayout() {
-        logger.debug("Getting layout: {}", layout);
-        return layout;
-    }
- 
-    public String getMsid() {
-        logger.debug("Getting MSID: {}", msid);
-        return msid;
-    }
- 
-    public String getAnalystName() {
-        logger.debug("Getting Analyst Name: {}", analystName);
-        return analystName;
-    }
- 
-    public String getAnalystProfileUrl() {
-        logger.debug("Getting Analyst Profile URL: {}", analystProfileUrl);
-        return analystProfileUrl;
-    }
- 
-    public String getAnalystEmail() {
-        logger.debug("Getting Analyst Email: {}", analystEmail);
-        return analystEmail;
-    }
- 
-    public String getAnalystNumber() {
-        logger.debug("Getting Analyst Number: {}", analystNumber);
-        return analystNumber;
-    }
-}
+package com.ms.wmrsicms.core.microsites.slingmodels;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.testing.mock.sling.junit5.SlingContext;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-
-
-[12:55] Lad, Uday Ankush
-package com.yourproject.core.models;
- 
-import org.apache.sling.models.annotations.Default;
-import org.apache.sling.models.annotations.Model;
-import org.apache.sling.models.annotations.Via;
-import org.apache.sling.models.annotations.injectorspecific.ValueMapValue;
-import org.apache.sling.models.annotations.injectorspecific.Inject;
-import org.apache.sling.api.SlingHttpServletRequest;
-import org.apache.sling.models.annotations.DefaultInjectionStrategy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
- 
-import javax.annotation.PostConstruct;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
- 
-@Model(adaptables = SlingHttpServletRequest.class, defaultInjectionStrategy = DefaultInjectionStrategy.OPTIONAL)
-public class ContactUsModel {
- 
-    private static final Logger logger = LoggerFactory.getLogger(ContactUsModel.class);
- 
-    @ValueMapValue(name = "heading")
-    @Default(values = "Default heading")
-    private String heading;
- 
-    @Inject
-    @Via("resource")
-    private List<ContactListModel> contactlist;
- 
-    @PostConstruct
-    protected void init() {
-        logger.info("Initializing ContactUsModel");
- 
-        if (heading != null) {
-            logger.info("This is the heading: {}", heading);
-        } else {
-            logger.warn("Heading is null or empty.");
-        }
- 
-        if (contactlist != null && !contactlist.isEmpty()) {
-            logger.info("Contact List contains {} items.", contactlist.size());
-        } else {
-            logger.warn("Contact List is null or empty.");
-        }
+
+@ExtendWith(MockitoExtension.class)
+class CardModelTest {
+
+    // Mocked context
+    private final SlingContext context = new SlingContext();
+
+    @Mock
+    private Resource resource;
+
+    @InjectMocks
+    private CardModel cardModel;
+
+    @BeforeEach
+    void setUp() {
+        when(resource.getChild("subsection")).thenReturn(mock(Resource.class));
+        when(resource.getChild("subsection").getChildren()).thenReturn(Collections.emptyList().iterator());
+
+        cardModel = context.registerInjectActivateService(new CardModel());
+        context.registerInjectActivateService(cardModel);
     }
- 
-    public String getHeading() {
-        logger.debug("Getting heading: {}", heading);
-        return heading;
+
+    @Test
+    void testGetTitle() {
+        String title = "Sample Title";
+        cardModel.title = title;
+
+        assertEquals(title, cardModel.getTitle());
     }
- 
-    public List<ContactListModel> getContactlist() {
-        logger.debug("Getting contact list with {} items", contactlist != null ? contactlist.size() : 0);
-        return contactlist;
+
+    @Test
+    void testGetIconImage() {
+        String iconImage = "sample-icon.png";
+        cardModel.iconImage = iconImage;
+
+        assertEquals(iconImage, cardModel.getIconImage());
+    }
+
+    @Test
+    void testGetInstructionText() {
+        String instructionText = "Follow these instructions.";
+        cardModel.instructionText = instructionText;
+
+        assertEquals(instructionText, cardModel.getInstructionText());
+    }
+
+    @Test
+    void testGetBackgroundcolor() {
+        String backgroundcolor = "#FFFFFF";
+        cardModel.backgroundcolor = backgroundcolor;
+
+        assertEquals(backgroundcolor, cardModel.getBackgroundcolor());
+    }
+
+    @Test
+    void testSubsectionInitialization() {
+        Resource subsectionResource = mock(Resource.class);
+        when(resource.getChild("subsection")).thenReturn(subsectionResource);
+        when(subsectionResource.getChildren()).thenReturn(Collections.emptyList().iterator());
+
+        cardModel.init();
+
+        assertNotNull(cardModel.getSubsection());
+        assertTrue(cardModel.getSubsection().isEmpty());
+    }
+
+    @Test
+    void testSubsectionWithChildren() {
+        Resource subsectionResource = mock(Resource.class);
+        Resource childResource = mock(Resource.class);
+        when(resource.getChild("subsection")).thenReturn(subsectionResource);
+        when(subsectionResource.getChildren()).thenReturn(Collections.singletonList(childResource).iterator());
+
+        Subsection mockSubsection = mock(Subsection.class);
+        when(childResource.adaptTo(Subsection.class)).thenReturn(mockSubsection);
+
+        cardModel.init();
+
+        List<Subsection> subsections = cardModel.getSubsection();
+        assertNotNull(subsections);
+        assertEquals(1, subsections.size());
+        assertEquals(mockSubsection, subsections.get(0));
+    }
+
+    @Test
+    void testSubsectionGetters() {
+        Subsection subsection = new Subsection();
+        subsection.subheading = "Sample Subheading";
+        subsection.description = "Sample Description";
+        subsection.links = new ArrayList<>();
+        subsection.isInlineLink = true;
+
+        assertEquals("Sample Subheading", subsection.getSubheading());
+        assertEquals("Sample Description", subsection.getDescription());
+        assertNotNull(subsection.getLinks());
+        assertTrue(subsection.isInlineLink());
+    }
+
+    @Test
+    void testLinkGetters() {
+        Link link = new Link();
+        link.title = "Sample Link";
+        link.path = "/content/sample";
+        link.isExternal = true;
+
+        assertEquals("Sample Link", link.getTitle());
+        assertEquals("/content/sample", link.getPath());
+        assertTrue(link.isExternal());
     }
 }
-
-
-
-web cast html
-
-<h2>${properties.heading}</h2>
-<div data-sly-list.item="${resource.children}">
-
-    <div data-sly-list.webcasts="${item.children}">
-        <span>${webcasts.authors}</span>
-        <span>${webcasts.datepicker}</span><br>
-        
-        <a href="${webcasts.link @ context='uri'}" 
-           target="${webcasts.externallink ? '_blank' : '_self'}">
-            ${webcasts.linkTitle}
-        </a>
-    </div>
-
-    <div data-sly-list.links="${item.children}">
-        <ul>
-            <li>
-                <a href="${links.linkUri @ context='uri'}">
-                    ${links.linkText}
-                </a>
-                ${links.externalLink ? '' : ''}
-            </li>
-        </ul>
-    </div>
-
-</div>
-
-logger.info - logger Resources and Information.
-logger.info is your first and best source for all of the information you’re looking for. From general topics to more of what you would expect to find here, logger.info has it all. We hope you find ...
- 
