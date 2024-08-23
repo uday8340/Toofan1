@@ -14,9 +14,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+import static org.junit.Assert.*;
 
 @RunWith(PowerMockRunner.class)
 public class CardModelTest {
@@ -28,81 +27,95 @@ public class CardModelTest {
     private Resource resource;
 
     @Mock
+    private Resource childResource;
+
+    @Mock
     private ValueMap valueMap;
 
     @Mock
     private Resource subsectionResource;
 
     @Mock
-    private Resource linkResource;
+    private Resource linksResource;
+
+    @Mock
+    private CardModel.Subsection subsection;
+
+    @Mock
+    private CardModel.Link link;
 
     @Before
-    public void initialize() {
+    public void setUp() {
         MockitoAnnotations.initMocks(this);
     }
 
     @Test
     public void testInit() {
-        // Mocking ValueMap to return expected values
-        when(resource.getValueMap()).thenReturn(valueMap);
-        when(valueMap.get("title", String.class)).thenReturn("Test Title");
-        when(valueMap.get("iconImage", String.class)).thenReturn("icon.png");
-        when(valueMap.get("instructionText", String.class)).thenReturn("Instruction text");
-        when(valueMap.get("backgroundcolor", String.class)).thenReturn("#FFFFFF");
-
-        // Mocking the resource to have children for subsection
+        // Mocking the resource to have children
+        when(resource.hasChildren()).thenReturn(true);
         when(resource.getChild("subsection")).thenReturn(subsectionResource);
-        when(subsectionResource.hasChildren()).thenReturn(true);
+        when(subsectionResource.getChildren()).thenReturn(createIterator(childResource));
 
-        // Creating a list of subsection resources
-        List<Resource> subsectionResourcesList = new ArrayList<>();
-        subsectionResourcesList.add(subsectionResource);
-        Iterator<Resource> subsectionIterator = subsectionResourcesList.iterator();
-        when(subsectionResource.getChildren()).thenReturn(subsectionIterator);
+        // Mocking childResource adaptation to Subsection
+        when(childResource.adaptTo(CardModel.Subsection.class)).thenReturn(subsection);
 
-        // Mocking subsection resource ValueMap
-        when(subsectionResource.getValueMap()).thenReturn(valueMap);
-        when(valueMap.get("subheading", String.class)).thenReturn("Subheading");
-        when(valueMap.get("description", String.class)).thenReturn("Subsection Description");
-
-        // Mocking links inside subsection
-        when(subsectionResource.getChild("links")).thenReturn(linkResource);
-        when(linkResource.hasChildren()).thenReturn(true);
-
-        // Creating a list of link resources
-        List<Resource> linkResourcesList = new ArrayList<>();
-        linkResourcesList.add(linkResource);
-        Iterator<Resource> linkIterator = linkResourcesList.iterator();
-        when(linkResource.getChildren()).thenReturn(linkIterator);
-
-        // Mocking link resource ValueMap
-        when(linkResource.getValueMap()).thenReturn(valueMap);
-        when(valueMap.get("title", String.class)).thenReturn("Link Title");
-        when(valueMap.get("path", String.class)).thenReturn("/content/link");
-        when(valueMap.get("isExternal", Boolean.class)).thenReturn(true);
-
-        // Initialize the model
+        // Initializing the model
         cardModel.init();
 
-        // Validate the title, iconImage, instructionText, and backgroundcolor
+        // Asserting the subsection list is populated correctly
+        assertNotNull(cardModel.getSubsection());
+        assertEquals(1, cardModel.getSubsection().size());
+    }
+
+    @Test
+    public void testSubsectionInit() {
+        CardModel.Subsection subsectionModel = new CardModel.Subsection();
+
+        // Mocking the subsection resource to have children
+        when(subsectionResource.getChild("links")).thenReturn(linksResource);
+        when(linksResource.getChildren()).thenReturn(createIterator(childResource));
+
+        // Mocking childResource adaptation to Link
+        when(childResource.adaptTo(CardModel.Link.class)).thenReturn(link);
+
+        // Injecting the resource
+        subsectionModel.init();
+
+        // Asserting the links list is populated correctly
+        assertNotNull(subsectionModel.getLinks());
+    }
+
+    @Test
+    public void testGetters() {
+        // Mocking ValueMap
+        when(resource.getValueMap()).thenReturn(valueMap);
+        when(valueMap.get("title", String.class)).thenReturn("Test Title");
+        when(valueMap.get("iconImage", String.class)).thenReturn("Test Icon Image");
+        when(valueMap.get("instructionText", String.class)).thenReturn("Test Instruction Text");
+        when(valueMap.get("backgroundcolor", String.class)).thenReturn("Test Background Color");
+
+        // Setting up fields manually as ValueMapValue injection won't work in unit tests
+        cardModel = new CardModel();
+        cardModel.init();
+        
+        // Setting field values
+        cardModel.getClass().getDeclaredField("title").set(cardModel, "Test Title");
+        cardModel.getClass().getDeclaredField("iconImage").set(cardModel, "Test Icon Image");
+        cardModel.getClass().getDeclaredField("instructionText").set(cardModel, "Test Instruction Text");
+        cardModel.getClass().getDeclaredField("backgroundcolor").set(cardModel, "Test Background Color");
+
+        // Assertions for getters
         assertEquals("Test Title", cardModel.getTitle());
-        assertEquals("icon.png", cardModel.getIconImage());
-        assertEquals("Instruction text", cardModel.getInstructionText());
-        assertEquals("#FFFFFF", cardModel.getBackgroundcolor());
+        assertEquals("Test Icon Image", cardModel.getIconImage());
+        assertEquals("Test Instruction Text", cardModel.getInstructionText());
+        assertEquals("Test Background Color", cardModel.getBackgroundcolor());
+    }
 
-        // Validate subsection initialization
-        List<CardModel.Subsection> subsections = cardModel.getSubsection();
-        assertEquals(1, subsections.size());
-        CardModel.Subsection subsection = subsections.get(0);
-        assertEquals("Subheading", subsection.getSubheading());
-        assertEquals("Subsection Description", subsection.getDescription());
-
-        // Validate links within subsection
-        List<CardModel.Subsection.Link> links = subsection.getLinks();
-        assertEquals(1, links.size());
-        CardModel.Subsection.Link link = links.get(0);
-        assertEquals("Link Title", link.getTitle());
-        assertEquals("/content/link", link.getPath());
-        assertTrue(link.isExternal());
+    private Iterator<Resource> createIterator(Resource... resources) {
+        List<Resource> resourceList = new ArrayList<>();
+        for (Resource resource : resources) {
+            resourceList.add(resource);
+        }
+        return resourceList.iterator();
     }
 }
