@@ -98,6 +98,23 @@ public class CardModelTest {
 
         // Assertions to verify the values
         assertEquals(null, cardModel.getTitle());
+
+
+@PostConstruct
+public void init() {
+    subsection = new ArrayList<>();
+    if (resource != null && resource.hasChildren()) {
+        for (Resource child : resource.getChild("subsection").getChildren()) {
+            subsection.add(child.adaptTo(Subsection.class));
+        }
+    }
+    ValueMap map = resource.adaptTo(ValueMap.class);
+    if (map != null) {
+        title = map.get("title", String.class);
+        backgroundcolor = map.get("backgroundcolor", String.class);
+    }
+}
+
         assertEquals(null, cardModel.getBackgroundcolor());
         assertEquals(Collections.emptyList(), cardModel.getSubsection());
     }
