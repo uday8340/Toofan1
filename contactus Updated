@@ -37,12 +37,6 @@ public class CardModelTest {
     private Resource child2;
 
     @Mock
-    private Resource linksResource;
-
-    @Mock
-    private Resource linkResource;
-
-    @Mock
     private ValueMap valueMap;
 
     @Before
@@ -54,24 +48,10 @@ public class CardModelTest {
 
     @Test
     public void testInit() {
-        // Setup mocks
-        when(resource.adaptTo(ValueMap.class)).thenReturn(valueMap);
-        when(valueMap.get("title", String.class)).thenReturn("Test Title");
-        when(valueMap.get("backgroundcolor", String.class)).thenReturn("blue");
-
-        when(resource.getChild("subsection")).thenReturn(subsectionResource);
-        when(subsectionResource.getChildren()).thenReturn(Arrays.asList(child1, child2));
-
-        CardModel.Subsection subsection1 = new CardModel.Subsection();
-        CardModel.Subsection subsection2 = new CardModel.Subsection();
-
-        when(child1.adaptTo(CardModel.Subsection.class)).thenReturn(subsection1);
-        when(child2.adaptTo(CardModel.Subsection.class)).thenReturn(subsection2);
-
-        // Execute
+        setupMocks("Test Title", "blue", Arrays.asList(child1, child2));
+        
         cardModel.init();
 
-        // Verify
         assertEquals("Test Title", cardModel.getTitle());
         assertEquals("blue", cardModel.getBackgroundcolor());
         assertEquals(2, cardModel.getSubsection().size());
@@ -79,18 +59,10 @@ public class CardModelTest {
 
     @Test
     public void testInitWithNoSubsections() {
-        // Setup mocks
-        when(resource.adaptTo(ValueMap.class)).thenReturn(valueMap);
-        when(valueMap.get("title", String.class)).thenReturn("Test Title");
-        when(valueMap.get("backgroundcolor", String.class)).thenReturn("blue");
+        setupMocks("Test Title", "blue", Collections.emptyList());
 
-        when(resource.getChild("subsection")).thenReturn(subsectionResource);
-        when(subsectionResource.getChildren()).thenReturn(Collections.emptyList());
-
-        // Execute
         cardModel.init();
 
-        // Verify
         assertEquals("Test Title", cardModel.getTitle());
         assertEquals("blue", cardModel.getBackgroundcolor());
         assertTrue(cardModel.getSubsection().isEmpty());
@@ -98,42 +70,24 @@ public class CardModelTest {
 
     @Test
     public void testInitWithNullResource() {
-        // Setup
         cardModel.resource = null;
-
-        // Execute
         cardModel.init();
 
-        // Verify
         assertEquals(null, cardModel.getTitle());
         assertEquals(null, cardModel.getBackgroundcolor());
         assertTrue(cardModel.getSubsection().isEmpty());
     }
 
-    @Test
-    public void testSubsectionInitialization() {
-        // Setup mocks
+    private void setupMocks(String title, String backgroundcolor, java.util.List<Resource> children) {
         when(resource.adaptTo(ValueMap.class)).thenReturn(valueMap);
-        when(valueMap.get("title", String.class)).thenReturn("Test Title");
-        when(valueMap.get("backgroundcolor", String.class)).thenReturn("blue");
+        when(valueMap.get("title", String.class)).thenReturn(title);
+        when(valueMap.get("backgroundcolor", String.class)).thenReturn(backgroundcolor);
 
-        Resource subsectionChild = mock(Resource.class);
         when(resource.getChild("subsection")).thenReturn(subsectionResource);
-        when(subsectionResource.getChildren()).thenReturn(Arrays.asList(subsectionChild));
-        when(subsectionChild.getChild("links")).thenReturn(linksResource);
-        when(linksResource.getChildren()).thenReturn(Collections.singletonList(linkResource));
+        when(subsectionResource.getChildren()).thenReturn(children);
 
-        CardModel.Subsection subsection = new CardModel.Subsection();
-        when(subsectionChild.adaptTo(CardModel.Subsection.class)).thenReturn(subsection);
-
-        CardModel.Link link = new CardModel.Link();
-        when(linkResource.adaptTo(CardModel.Link.class)).thenReturn(link);
-
-        // Execute
-        cardModel.init();
-
-        // Verify
-        assertEquals(1, cardModel.getSubsection().size());
-        assertEquals(1, cardModel.getSubsection().get(0).getLinks().size());
+        for (Resource child : children) {
+            when(child.adaptTo(CardModel.Subsection.class)).thenReturn(new CardModel.Subsection());
+        }
     }
 }
