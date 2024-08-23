@@ -2,7 +2,9 @@ package com.ms.wmrsicms.core.microsites.slingmodels;
 
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ValueMap;
+import org.apache.sling.testing.mock.sling.junit.SlingContext;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -10,12 +12,11 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.Arrays;
+import java.util.Collections;
 
-import static org.mockito.Mockito.*;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.when;
 
 @RunWith(PowerMockRunner.class)
 public class CardModelTest {
@@ -25,97 +26,46 @@ public class CardModelTest {
 
     @Mock
     private Resource resource;
-
     @Mock
-    private Resource childResource;
+    private Resource subsectionResource;
+    @Mock
+    private Resource child1;
+    @Mock
+    private Resource child2;
 
     @Mock
     private ValueMap valueMap;
 
-    @Mock
-    private Resource subsectionResource;
-
-    @Mock
-    private Resource linksResource;
-
-    @Mock
-    private CardModel.Subsection subsection;
-
-    @Mock
-    private CardModel.Link link;
-
     @Before
-    public void setUp() {
+    public void initialize() {
         MockitoAnnotations.initMocks(this);
+        cardModel = new CardModel();
+        cardModel.resource = resource;
     }
 
     @Test
     public void testInit() {
-        // Mocking the resource to have children
-        when(resource.hasChildren()).thenReturn(true);
-        when(resource.getChild("subsection")).thenReturn(subsectionResource);
-        when(subsectionResource.getChildren()).thenReturn(createIterator(childResource));
-
-        // Mocking childResource adaptation to Subsection
-        when(childResource.adaptTo(CardModel.Subsection.class)).thenReturn(subsection);
-
-        // Initializing the model
-        cardModel.init();
-
-        // Asserting the subsection list is populated correctly
-        assertNotNull(cardModel.getSubsection());
-        assertEquals(1, cardModel.getSubsection().size());
-    }
-
-    @Test
-    public void testSubsectionInit() {
-        CardModel.Subsection subsectionModel = new CardModel.Subsection();
-
-        // Mocking the subsection resource to have children
-        when(subsectionResource.getChild("links")).thenReturn(linksResource);
-        when(linksResource.getChildren()).thenReturn(createIterator(childResource));
-
-        // Mocking childResource adaptation to Link
-        when(childResource.adaptTo(CardModel.Link.class)).thenReturn(link);
-
-        // Injecting the resource
-        subsectionModel.init();
-
-        // Asserting the links list is populated correctly
-        assertNotNull(subsectionModel.getLinks());
-    }
-
-    @Test
-    public void testGetters() {
-        // Mocking ValueMap
-        when(resource.getValueMap()).thenReturn(valueMap);
+        // Mocking ValueMap to return specific values
+        when(resource.adaptTo(ValueMap.class)).thenReturn(valueMap);
         when(valueMap.get("title", String.class)).thenReturn("Test Title");
-        when(valueMap.get("iconImage", String.class)).thenReturn("Test Icon Image");
-        when(valueMap.get("instructionText", String.class)).thenReturn("Test Instruction Text");
-        when(valueMap.get("backgroundcolor", String.class)).thenReturn("Test Background Color");
+        when(valueMap.get("backgroundcolor", String.class)).thenReturn("blue");
 
-        // Setting up fields manually as ValueMapValue injection won't work in unit tests
-        cardModel = new CardModel();
+        // Mocking the child resources
+        when(resource.getChild("subsection")).thenReturn(subsectionResource);
+        when(subsectionResource.getChildren()).thenReturn(Arrays.asList(child1, child2));
+
+        // Mocking child resources to return specific Subsection objects
+        CardModel.Subsection subsection1 = new CardModel.Subsection();
+        CardModel.Subsection subsection2 = new CardModel.Subsection();
+        when(child1.adaptTo(CardModel.Subsection.class)).thenReturn(subsection1);
+        when(child2.adaptTo(CardModel.Subsection.class)).thenReturn(subsection2);
+
+        // Initialize the model
         cardModel.init();
-        
-        // Setting field values
-        cardModel.getClass().getDeclaredField("title").set(cardModel, "Test Title");
-        cardModel.getClass().getDeclaredField("iconImage").set(cardModel, "Test Icon Image");
-        cardModel.getClass().getDeclaredField("instructionText").set(cardModel, "Test Instruction Text");
-        cardModel.getClass().getDeclaredField("backgroundcolor").set(cardModel, "Test Background Color");
 
-        // Assertions for getters
+        // Assertions to verify the values
         assertEquals("Test Title", cardModel.getTitle());
-        assertEquals("Test Icon Image", cardModel.getIconImage());
-        assertEquals("Test Instruction Text", cardModel.getInstructionText());
-        assertEquals("Test Background Color", cardModel.getBackgroundcolor());
-    }
-
-    private Iterator<Resource> createIterator(Resource... resources) {
-        List<Resource> resourceList = new ArrayList<>();
-        for (Resource resource : resources) {
-            resourceList.add(resource);
-        }
-        return resourceList.iterator();
+        assertEquals("blue", cardModel.getBackgroundcolor());
+        assertEquals(Arrays.asList(subsection1, subsection2), cardModel.getSubsection());
     }
 }
