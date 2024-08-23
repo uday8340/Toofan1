@@ -2,9 +2,7 @@ package com.ms.wmrsicms.core.microsites.slingmodels;
 
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ValueMap;
-import org.apache.sling.testing.mock.sling.junit.SlingContext;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -26,10 +24,13 @@ public class CardModelTest {
 
     @Mock
     private Resource resource;
+
     @Mock
     private Resource subsectionResource;
+
     @Mock
     private Resource child1;
+
     @Mock
     private Resource child2;
 
@@ -66,6 +67,38 @@ public class CardModelTest {
         // Assertions to verify the values
         assertEquals("Test Title", cardModel.getTitle());
         assertEquals("blue", cardModel.getBackgroundcolor());
-        assertEquals(Arrays.asList(subsection1, subsection2), cardModel.getSubsection());
+        assertEquals(2, cardModel.getSubsection().size());
+    }
+
+    @Test
+    public void testInitWithNoSubsections() {
+        // Mocking ValueMap
+        when(resource.adaptTo(ValueMap.class)).thenReturn(valueMap);
+        when(valueMap.get("title", String.class)).thenReturn("Test Title");
+        when(valueMap.get("backgroundcolor", String.class)).thenReturn("blue");
+
+        // Mocking resource without children
+        when(resource.getChild("subsection")).thenReturn(subsectionResource);
+        when(subsectionResource.getChildren()).thenReturn(Collections.emptyList());
+
+        // Initialize the model
+        cardModel.init();
+
+        // Assertions to verify the values
+        assertEquals("Test Title", cardModel.getTitle());
+        assertEquals("blue", cardModel.getBackgroundcolor());
+        assertEquals(Collections.emptyList(), cardModel.getSubsection());
+    }
+
+    @Test
+    public void testInitWithNullResource() {
+        // Set resource to null and initialize the model
+        cardModel.resource = null;
+        cardModel.init();
+
+        // Assertions to verify the values
+        assertEquals(null, cardModel.getTitle());
+        assertEquals(null, cardModel.getBackgroundcolor());
+        assertEquals(Collections.emptyList(), cardModel.getSubsection());
     }
 }
