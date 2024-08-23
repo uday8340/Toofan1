@@ -14,7 +14,8 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import java.util.Arrays;
 import java.util.Collections;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 @RunWith(PowerMockRunner.class)
@@ -50,92 +51,95 @@ public class CardModelTest {
 
     @Test
     public void testInitWithValidData() {
-        // Mock ValueMap
         when(resource.adaptTo(ValueMap.class)).thenReturn(valueMap);
         when(valueMap.get("title", String.class)).thenReturn("Test Title");
         when(valueMap.get("backgroundcolor", String.class)).thenReturn("blue");
 
-        // Mock subsection resource
         when(resource.getChild("subsection")).thenReturn(subsectionResource);
         when(subsectionResource.getChildren()).thenReturn(Arrays.asList(child1, child2));
 
-        // Mock Subsection objects
         CardModel.Subsection subsection1 = new CardModel.Subsection();
         CardModel.Subsection subsection2 = new CardModel.Subsection();
         when(child1.adaptTo(CardModel.Subsection.class)).thenReturn(subsection1);
         when(child2.adaptTo(CardModel.Subsection.class)).thenReturn(subsection2);
 
-        // Execute init()
         cardModel.init();
 
-        // Print statements for manual verification
-        System.out.println("Title: " + cardModel.getTitle());
-        System.out.println("Background Color: " + cardModel.getBackgroundcolor());
-        System.out.println("Subsections Size: " + cardModel.getSubsection().size());
+        // Verify that init() is executed
+        assertNotNull(cardModel.getTitle());
+        assertNotNull(cardModel.getBackgroundcolor());
+        assertNotNull(cardModel.getSubsection());
     }
 
     @Test
     public void testInitWithNoSubsections() {
-        // Mock ValueMap
         when(resource.adaptTo(ValueMap.class)).thenReturn(valueMap);
         when(valueMap.get("title", String.class)).thenReturn("Test Title");
         when(valueMap.get("backgroundcolor", String.class)).thenReturn("blue");
 
-        // Mock resource without children
         when(resource.getChild("subsection")).thenReturn(subsectionResource);
         when(subsectionResource.getChildren()).thenReturn(Collections.emptyList());
 
-        // Execute init()
         cardModel.init();
 
-        // Print statements for manual verification
-        System.out.println("Title: " + cardModel.getTitle());
-        System.out.println("Background Color: " + cardModel.getBackgroundcolor());
-        System.out.println("Subsections Size: " + cardModel.getSubsection().size());
+        // Verify that init() is executed and subsections list is empty
+        assertTrue(cardModel.getSubsection().isEmpty());
     }
 
     @Test
     public void testInitWithNullResource() {
-        // Mock ValueMap
-        when(resource.adaptTo(ValueMap.class)).thenReturn(valueMap);
-        when(valueMap.get("title", String.class)).thenReturn(null);
-        when(valueMap.get("backgroundcolor", String.class)).thenReturn(null);
+        // Simulate a null resource scenario
+        cardModel.resource = null;
 
-        // Mock resource with null subsection
-        when(resource.getChild("subsection")).thenReturn(null);
-
-        // Execute init()
         cardModel.init();
 
-        // Print statements for manual verification
-        System.out.println("Title: " + cardModel.getTitle());
-        System.out.println("Background Color: " + cardModel.getBackgroundcolor());
-        System.out.println("Subsections Size: " + cardModel.getSubsection().size());
+        // Verify that init() does not throw any exceptions
+        assertTrue(cardModel.getSubsection().isEmpty());
     }
 
     @Test
-    public void testSubsectionInitialization() {
-        // Mock ValueMap
+    public void testSubsectionInitializationWithLinks() {
         when(resource.adaptTo(ValueMap.class)).thenReturn(valueMap);
         when(valueMap.get("title", String.class)).thenReturn("Test Title");
         when(valueMap.get("backgroundcolor", String.class)).thenReturn("blue");
 
-        // Mock subsection resources
         when(resource.getChild("subsection")).thenReturn(subsectionResource);
         when(subsectionResource.getChildren()).thenReturn(Collections.singletonList(child1));
 
-        // Mock a Subsection with links
         CardModel.Subsection subsection = new CardModel.Subsection();
         when(child1.adaptTo(CardModel.Subsection.class)).thenReturn(subsection);
         when(child1.getChild("links")).thenReturn(linkResource);
         when(linkResource.getChildren()).thenReturn(Collections.emptyList());
 
-        // Execute init()
         cardModel.init();
 
-        // Print statements for manual verification
-        System.out.println("Title: " + cardModel.getTitle());
-        System.out.println("Background Color: " + cardModel.getBackgroundcolor());
-        System.out.println("Subsections Size: " + cardModel.getSubsection().size());
+        // Verify subsections list is initialized
+        assertNotNull(cardModel.getSubsection());
+    }
+
+    @Test
+    public void testSubsectionWithLinks() {
+        when(resource.adaptTo(ValueMap.class)).thenReturn(valueMap);
+        when(valueMap.get("title", String.class)).thenReturn("Test Title");
+        when(valueMap.get("backgroundcolor", String.class)).thenReturn("blue");
+
+        when(resource.getChild("subsection")).thenReturn(subsectionResource);
+        when(subsectionResource.getChildren()).thenReturn(Arrays.asList(child1));
+
+        CardModel.Subsection subsection = new CardModel.Subsection();
+        when(child1.adaptTo(CardModel.Subsection.class)).thenReturn(subsection);
+
+        Resource linksResource = org.mockito.Mockito.mock(Resource.class);
+        when(child1.getChild("links")).thenReturn(linksResource);
+        when(linksResource.getChildren()).thenReturn(Collections.singletonList(linkResource));
+
+        CardModel.Link link = new CardModel.Link();
+        when(linkResource.adaptTo(CardModel.Link.class)).thenReturn(link);
+
+        cardModel.init();
+
+        // Verify subsections and links initialization
+        assertNotNull(cardModel.getSubsection());
+        assertTrue(cardModel.getSubsection().size() > 0);
     }
 }
