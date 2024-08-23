@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 @RunWith(PowerMockRunner.class)
@@ -47,16 +48,18 @@ public class CardModelTest {
 
     @Test
     public void testInitWithValidData() {
+        // Mock ValueMap
         when(resource.adaptTo(ValueMap.class)).thenReturn(valueMap);
         when(valueMap.get("title", String.class)).thenReturn("Test Title");
         when(valueMap.get("backgroundcolor", String.class)).thenReturn("blue");
 
+        // Mock child resources
         when(resource.getChild("subsection")).thenReturn(subsectionResource);
         when(subsectionResource.getChildren()).thenReturn(Arrays.asList(child1, child2));
 
+        // Mock Subsection objects
         CardModel.Subsection subsection1 = new CardModel.Subsection();
         CardModel.Subsection subsection2 = new CardModel.Subsection();
-
         when(child1.adaptTo(CardModel.Subsection.class)).thenReturn(subsection1);
         when(child2.adaptTo(CardModel.Subsection.class)).thenReturn(subsection2);
 
@@ -69,10 +72,12 @@ public class CardModelTest {
 
     @Test
     public void testInitWithNoSubsections() {
+        // Mock ValueMap
         when(resource.adaptTo(ValueMap.class)).thenReturn(valueMap);
         when(valueMap.get("title", String.class)).thenReturn("Test Title");
         when(valueMap.get("backgroundcolor", String.class)).thenReturn("blue");
 
+        // Mock resource without children
         when(resource.getChild("subsection")).thenReturn(subsectionResource);
         when(subsectionResource.getChildren()).thenReturn(Collections.emptyList());
 
@@ -80,45 +85,49 @@ public class CardModelTest {
 
         assertEquals("Test Title", cardModel.getTitle());
         assertEquals("blue", cardModel.getBackgroundcolor());
-        assertEquals(Collections.emptyList(), cardModel.getSubsection());
+        assertTrue(cardModel.getSubsection().isEmpty());
     }
 
     @Test
-    public void testInitWithNullValueMap() {
-        when(resource.adaptTo(ValueMap.class)).thenReturn(null);
+    public void testInitWithNullResource() {
+        // Mock ValueMap
+        when(resource.adaptTo(ValueMap.class)).thenReturn(valueMap);
+        when(valueMap.get("title", String.class)).thenReturn(null);
+        when(valueMap.get("backgroundcolor", String.class)).thenReturn(null);
 
-        when(resource.getChild("subsection")).thenReturn(subsectionResource);
-        when(subsectionResource.getChildren()).thenReturn(Collections.emptyList());
+        // Mock resource with null subsection
+        when(resource.getChild("subsection")).thenReturn(null);
 
         cardModel.init();
 
         assertEquals(null, cardModel.getTitle());
         assertEquals(null, cardModel.getBackgroundcolor());
-        assertEquals(Collections.emptyList(), cardModel.getSubsection());
+        assertTrue(cardModel.getSubsection().isEmpty());
     }
 
     @Test
-    public void testGetters() {
+    public void testSubsectionInitialization() {
+        // Mock ValueMap
+        when(resource.adaptTo(ValueMap.class)).thenReturn(valueMap);
         when(valueMap.get("title", String.class)).thenReturn("Test Title");
         when(valueMap.get("backgroundcolor", String.class)).thenReturn("blue");
 
-        // Manually call init to set the values
+        // Mock subsection resources
+        when(resource.getChild("subsection")).thenReturn(subsectionResource);
+        when(subsectionResource.getChildren()).thenReturn(Collections.singletonList(child1));
+
+        // Mock a Subsection with links
+        CardModel.Subsection subsection = new CardModel.Subsection();
+        Resource linkResource = org.mockito.Mockito.mock(Resource.class);
+        when(child1.adaptTo(CardModel.Subsection.class)).thenReturn(subsection);
+        when(child1.getChild("links")).thenReturn(linkResource);
+        when(linkResource.getChildren()).thenReturn(Collections.emptyList());
+
         cardModel.init();
 
-        // Validate getters
         assertEquals("Test Title", cardModel.getTitle());
         assertEquals("blue", cardModel.getBackgroundcolor());
-    }
-
-    @Test
-    public void testSubsectionLinkInitialization() {
-        CardModel.Subsection subsection = new CardModel.Subsection();
-        when(child1.adaptTo(CardModel.Subsection.class)).thenReturn(subsection);
-        when(child1.getChild("links")).thenReturn(subsectionResource);
-        when(subsectionResource.getChildren()).thenReturn(Collections.emptyList());
-
-        cardModel.init();
-
-        assertEquals(Collections.emptyList(), subsection.getLinks());
+        assertEquals(1, cardModel.getSubsection().size());
+        assertTrue(cardModel.getSubsection().get(0).getLinks().isEmpty());
     }
 }
