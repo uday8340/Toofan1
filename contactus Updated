@@ -37,6 +37,12 @@ public class CardModelTest {
     private Resource child2;
 
     @Mock
+    private Resource linksResource;
+
+    @Mock
+    private Resource linkResource;
+
+    @Mock
     private ValueMap valueMap;
 
     @Before
@@ -49,7 +55,7 @@ public class CardModelTest {
     @Test
     public void testInit() {
         setupMocks("Test Title", "blue", Arrays.asList(child1, child2));
-        
+
         cardModel.init();
 
         assertEquals("Test Title", cardModel.getTitle());
@@ -66,6 +72,38 @@ public class CardModelTest {
         assertEquals("Test Title", cardModel.getTitle());
         assertEquals("blue", cardModel.getBackgroundcolor());
         assertTrue(cardModel.getSubsection().isEmpty());
+    }
+
+    @Test
+    public void testInitWithLinks() {
+        // Setup mock for links
+        Resource subsectionChild = mock(Resource.class);
+        Resource linkResource = mock(Resource.class);
+
+        when(resource.getChild("subsection")).thenReturn(subsectionResource);
+        when(subsectionResource.getChildren()).thenReturn(Arrays.asList(subsectionChild));
+
+        CardModel.Subsection subsection = new CardModel.Subsection();
+        CardModel.Link link = new CardModel.Link();
+
+        when(subsectionChild.adaptTo(CardModel.Subsection.class)).thenReturn(subsection);
+        when(subsectionChild.getChild("links")).thenReturn(linksResource);
+        when(linksResource.getChildren()).thenReturn(Collections.singletonList(linkResource));
+        when(linkResource.adaptTo(CardModel.Link.class)).thenReturn(link);
+
+        // Setup value map
+        when(resource.adaptTo(ValueMap.class)).thenReturn(valueMap);
+        when(valueMap.get("title", String.class)).thenReturn("Test Title");
+        when(valueMap.get("backgroundcolor", String.class)).thenReturn("blue");
+
+        // Execute
+        cardModel.init();
+
+        // Verify
+        assertEquals("Test Title", cardModel.getTitle());
+        assertEquals("blue", cardModel.getBackgroundcolor());
+        assertEquals(1, cardModel.getSubsection().size());
+        assertEquals(1, cardModel.getSubsection().get(0).getLinks().size());
     }
 
     @Test
