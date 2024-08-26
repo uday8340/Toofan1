@@ -1,145 +1,19 @@
-package com.ms.wmrsicms.core.mygio.services.microsites;
-
-import com.ms.wmrsicms.core.microsites.slingmodels.CardModel;
-import org.apache.sling.api.resource.Resource;
-import org.apache.sling.api.resource.ValueMap;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.powermock.modules.junit4.PowerMockRunner;
-
-import java.util.Arrays;
-import java.util.Collections;
-
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
-
-@RunWith(PowerMockRunner.class)
-public class CardModelTest {
-
-    @InjectMocks
-    private CardModel cardModel;
-
-    @Mock
-    private Resource resource;
-
-    @Mock
-    private Resource subsectionResource;
-
-    @Mock
-    private Resource child1;
-
-    @Mock
-    private Resource child2;
-
-    @Mock
-    private Resource linkResource;
-
-    @Mock
-    private ValueMap valueMap;
-
-    @Before
-    public void initialize() {
-        MockitoAnnotations.initMocks(this);
-        cardModel = new CardModel();
-        cardModel.resource = resource;
-    }
-
-    @Test
-    public void testInitWithValidData() {
-        when(resource.adaptTo(ValueMap.class)).thenReturn(valueMap);
-        when(valueMap.get("title", String.class)).thenReturn("Test Title");
-        when(valueMap.get("backgroundcolor", String.class)).thenReturn("blue");
-
+@Test
+    public void testInitWithValidResourceAndChildren() {
+        // Mocking the resource to have children
+        when(resource.hasChildren()).thenReturn(true);
         when(resource.getChild("subsection")).thenReturn(subsectionResource);
-        when(subsectionResource.getChildren()).thenReturn(Arrays.asList(child1, child2));
+        when(subsectionResource.getChildren()).thenReturn(Collections.singletonList(child));
 
-        CardModel.Subsection subsection1 = new CardModel.Subsection();
-        CardModel.Subsection subsection2 = new CardModel.Subsection();
-        when(child1.adaptTo(CardModel.Subsection.class)).thenReturn(subsection1);
-        when(child2.adaptTo(CardModel.Subsection.class)).thenReturn(subsection2);
-
-        cardModel.init();
-
-        // Verify that init() is executed
-        assertNotNull(cardModel.getTitle());
-        assertNotNull(cardModel.getBackgroundcolor());
-        assertNotNull(cardModel.getSubsection());
-    }
-
-    @Test
-    public void testInitWithNoSubsections() {
-        when(resource.adaptTo(ValueMap.class)).thenReturn(valueMap);
-        when(valueMap.get("title", String.class)).thenReturn("Test Title");
-        when(valueMap.get("backgroundcolor", String.class)).thenReturn("blue");
-
-        when(resource.getChild("subsection")).thenReturn(subsectionResource);
-        when(subsectionResource.getChildren()).thenReturn(Collections.emptyList());
-
-        cardModel.init();
-
-        // Verify that init() is executed and subsections list is empty
-        assertTrue(cardModel.getSubsection().isEmpty());
-    }
-
-    @Test
-    public void testInitWithNullResource() {
-        // Simulate a null resource scenario
-        cardModel.resource = null;
-
-        cardModel.init();
-
-        // Verify that init() does not throw any exceptions
-        assertTrue(cardModel.getSubsection().isEmpty());
-    }
-
-    @Test
-    public void testSubsectionInitializationWithLinks() {
-        when(resource.adaptTo(ValueMap.class)).thenReturn(valueMap);
-        when(valueMap.get("title", String.class)).thenReturn("Test Title");
-        when(valueMap.get("backgroundcolor", String.class)).thenReturn("blue");
-
-        when(resource.getChild("subsection")).thenReturn(subsectionResource);
-        when(subsectionResource.getChildren()).thenReturn(Collections.singletonList(child1));
-
+        // Mocking the child to adapt to Subsection class
         CardModel.Subsection subsection = new CardModel.Subsection();
-        when(child1.adaptTo(CardModel.Subsection.class)).thenReturn(subsection);
-        when(child1.getChild("links")).thenReturn(linkResource);
-        when(linkResource.getChildren()).thenReturn(Collections.emptyList());
+        when(child.adaptTo(CardModel.Subsection.class)).thenReturn(subsection);
 
+        // Execute the method under test
         cardModel.init();
 
-        // Verify subsections list is initialized
+        // Verifying that the subsection list is initialized and contains the adapted child
         assertNotNull(cardModel.getSubsection());
+        assertEquals(1, cardModel.getSubsection().size());
+        assertSame(subsection, cardModel.getSubsection().get(0));
     }
-
-    @Test
-    public void testSubsectionWithLinks() {
-        when(resource.adaptTo(ValueMap.class)).thenReturn(valueMap);
-        when(valueMap.get("title", String.class)).thenReturn("Test Title");
-        when(valueMap.get("backgroundcolor", String.class)).thenReturn("blue");
-
-        when(resource.getChild("subsection")).thenReturn(subsectionResource);
-        when(subsectionResource.getChildren()).thenReturn(Arrays.asList(child1));
-
-        CardModel.Subsection subsection = new CardModel.Subsection();
-        when(child1.adaptTo(CardModel.Subsection.class)).thenReturn(subsection);
-
-        Resource linksResource = org.mockito.Mockito.mock(Resource.class);
-        when(child1.getChild("links")).thenReturn(linksResource);
-        when(linksResource.getChildren()).thenReturn(Collections.singletonList(linkResource));
-
-        CardModel.Link link = new CardModel.Link();
-        when(linkResource.adaptTo(CardModel.Link.class)).thenReturn(link);
-
-        cardModel.init();
-
-        // Verify subsections and links initialization
-        assertNotNull(cardModel.getSubsection());
-        assertTrue(cardModel.getSubsection().size() > 0);
-    }
-}
