@@ -1,19 +1,163 @@
- @Test
-    public void testInitWithLinks() {
-        // Mock the behavior of resource.getChild("links")
-        when(resource.getChild("links")).thenReturn(linkResource);
+package com.ns.wmrsicms.core.microsites.slingmodels;
 
-        // Mock the behavior of linkResource.getChildren() to return a list of child link resources
-        when(linkResource.getChildren()).thenReturn(Collections.singletonList(childLinkResource));
+import com.ns.wmrsicms.core.microsites.slingmodels.ReportListModel.Link;
+import com.ns.wmrsicms.core.microsites.slingmodels.ReportListModel.Report;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ValueMap;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.powermock.modules.junit4.PowerMockRunner;
 
-        // Mock the behavior of childLinkResource.adaptTo(Link.class)
-        CardModel.Link mockLink = new CardModel.Link();
-        when(childLinkResource.adaptTo(CardModel.Link.class)).thenReturn(mockLink);
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
-        // Call the init method to initialize the links list
-        subsection.init();
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.when;
 
-        // Assert that the links list is initialized and contains the mock link
-        assertNotNull("Links list should be initialized", subsection.getLinks());
-        assertNotNull("Links list should contain elements", subsection.getLinks().get(0));
+@RunWith(PowerMockRunner.class)
+public class ReportListModelTest {
+
+    @InjectMocks
+    private ReportListModel reportListModel;
+
+    @Mock
+    private Resource resource;
+
+    @Mock
+    private ValueMap valueMap;
+
+    @Mock
+    private Resource linkResource;
+
+    @Mock
+    private Resource reportResource;
+
+    @Mock
+    private Resource linkChildResource;
+
+    @Mock
+    private Resource reportChildResource;
+
+    @Before
+    public void setup() {
+        MockitoAnnotations.initMocks(this);
+        reportListModel = new ReportListModel();
     }
+
+    @Test
+    public void testGettersAndSetters() {
+        // Mock ValueMap properties
+        when(resource.adaptTo(ValueMap.class)).thenReturn(valueMap);
+        when(valueMap.get("backgroundColor", String.class)).thenReturn("blue");
+        when(valueMap.get("iconPath", String.class)).thenReturn("/path/to/icon");
+        when(valueMap.get("title", String.class)).thenReturn("Test Title");
+        when(valueMap.get("hideBottomBorder", String.class)).thenReturn("true");
+        when(valueMap.get("hideSource", String.class)).thenReturn("false");
+        when(valueMap.get("hideEmail", String.class)).thenReturn("false");
+        when(valueMap.get("linkTitle", String.class)).thenReturn("Test Link Title");
+        when(valueMap.get("linkUrl", String.class)).thenReturn("/link/url");
+        when(valueMap.get("isExternal", String.class)).thenReturn("false");
+        when(valueMap.get("internalUseOnly", String.class)).thenReturn("false");
+
+        // Set the resource
+        reportListModel = resource.adaptTo(ReportListModel.class);
+
+        // Test getters
+        assertEquals("blue", reportListModel.getBackgroundColor());
+        assertEquals("/path/to/icon", reportListModel.getIconPath());
+        assertEquals("Test Title", reportListModel.getTitle());
+        assertEquals("true", reportListModel.getHideBottomBorder());
+        assertEquals("false", reportListModel.getHideSource());
+        assertEquals("false", reportListModel.getHideEmail());
+        assertEquals("Test Link Title", reportListModel.getLinkTitle());
+        assertEquals("/link/url", reportListModel.getLinkUrl());
+        assertEquals("false", reportListModel.getIsExternal());
+        assertEquals("false", reportListModel.getInternalUseOnly());
+    }
+
+    @Test
+    public void testLinkModel() {
+        // Mocking a single Link model
+        when(resource.getChild("links")).thenReturn(linkResource);
+        when(linkResource.adaptTo(Link.class)).thenReturn(new Link());
+
+        Link link = new Link();
+        link.setTitle("Link Title");
+        link.setPath("/content/link");
+        link.setExternal(true);
+
+        assertEquals("Link Title", link.getTitle());
+        assertEquals("/content/link", link.getPath());
+        assertTrue(link.isExternal());
+    }
+
+    @Test
+    public void testReportModelWithLinks() {
+        // Mocking a Report model with child Links
+        when(resource.getChild("reports")).thenReturn(reportResource);
+        when(reportResource.adaptTo(Report.class)).thenReturn(new Report());
+
+        Report report = new Report();
+        report.setReportId("report-id-123");
+
+        Link link = new Link();
+        link.setTitle("Report Link Title");
+        link.setPath("/content/report/link");
+        link.setExternal(false);
+
+        report.setLinks(Collections.singletonList(link));
+
+        assertEquals("report-id-123", report.getReportId());
+        assertEquals(1, report.getLinks().size());
+        assertEquals("Report Link Title", report.getLinks().get(0).getTitle());
+        assertEquals("/content/report/link", report.getLinks().get(0).getPath());
+        assertFalse(report.getLinks().get(0).isExternal());
+    }
+
+    @Test
+    public void testEmptyReportsAndLinks() {
+        // Testing when reports and links are not available
+        when(resource.getChild("reports")).thenReturn(null);
+        when(resource.getChild("links")).thenReturn(null);
+
+        assertNull(reportListModel.getReports());
+        assertNull(reportListModel.getLinks());
+    }
+
+    @Test
+    public void testMultipleReportsAndLinks() {
+        // Mocking multiple Reports and Links
+        when(resource.getChild("reports")).thenReturn(reportResource);
+        when(reportResource.getChildren()).thenReturn(Arrays.asList(reportChildResource));
+        when(reportChildResource.adaptTo(Report.class)).thenReturn(new Report());
+
+        Report report = new Report();
+        report.setReportId("report-id-1");
+
+        Link link1 = new Link();
+        link1.setTitle("Link 1");
+        link1.setPath("/content/report/link1");
+        link1.setExternal(false);
+
+        Link link2 = new Link();
+        link2.setTitle("Link 2");
+        link2.setPath("/content/report/link2");
+        link2.setExternal(true);
+
+        report.setLinks(Arrays.asList(link1, link2));
+
+        when(reportChildResource.adaptTo(Report.class)).thenReturn(report);
+        reportListModel.setReports(Arrays.asList(report));
+
+        List<Report> reports = reportListModel.getReports();
+        assertNotNull(reports);
+        assertEquals(1, reports.size());
+        assertEquals("report-id-1", reports.get(0).getReportId());
+        assertEquals(2, reports.get(0).getLinks().size());
+    }
+}
