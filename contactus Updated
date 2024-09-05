@@ -217,3 +217,11 @@ $(function() {
         this.value = this.value.toLocaleUpperCase();
     });
 });
+
+listeners="{
+                'render': function(cmp) {
+                    cmp.el.down('input').on('input', function() {
+                        this.value = this.value.toUpperCase();
+                    });
+                }
+            }"
