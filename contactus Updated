@@ -163,19 +163,17 @@ public class ReportListModelTest {
 }
 
 
-(function(document, $, Coral) {
+(function(document, $) {
     "use strict";
 
     $(document).on("dialog-ready", function() {
-        var textfield = $("input.convert-uppercase");
-        
-        if (textfield.length) {
-            // Convert text to uppercase on input
-            textfield.on('input', function() {
-                var uppercasedText = $(this).val().toUpperCase();
-                $(this).val(uppercasedText);
-            });
-        }
+        // Target the MSID text field by the custom class added
+        $(".uppercase-text").on("input", function() {
+            this.value = this.value.toUpperCase();
+        });
+    });
+})(document, Granite.$);
+
     });
 })(document, Granite.$, Coral);
 
