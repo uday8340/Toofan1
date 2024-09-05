@@ -210,3 +210,10 @@ var character = '5';if (character == character.toUpperCase()) {
  alert ('lower case true');
 }
 <input oninput="this.value = this.value.toUpperCase()" />
+
+
+$(function() {
+    $('input').keyup(function() {
+        this.value = this.value.toLocaleUpperCase();
+    });
+});
