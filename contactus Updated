@@ -209,4 +209,4 @@ var character = '5';if (character == character.toUpperCase()) {
 }if (character == character.toLowerCase()){
  alert ('lower case true');
 }
-
+<input oninput="this.value = this.value.toUpperCase()" />
