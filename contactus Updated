@@ -161,3 +161,21 @@ public class ReportListModelTest {
         assertEquals(2, reports.get(0).getLinks().size());
     }
 }
+
+
+(function(document, $, Coral) {
+    "use strict";
+
+    $(document).on("dialog-ready", function() {
+        var textfield = $("input.convert-uppercase");
+        
+        if (textfield.length) {
+            // Convert text to uppercase on input
+            textfield.on('input', function() {
+                var uppercasedText = $(this).val().toUpperCase();
+                $(this).val(uppercasedText);
+            });
+        }
+    });
+})(document, Granite.$, Coral);
+
