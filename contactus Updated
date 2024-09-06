@@ -283,3 +283,37 @@ $(document).on("dialog-ready", function() {
     });
 });
 
+
+..............................................................................
+
+(function(document, $) {
+    "use strict";
+
+    // Convert MSID to uppercase as the user types
+    $(document).on("dialog-ready", function() {
+        $(".uppercase-text").on("input", function() {
+            this.value = this.value.toUpperCase();
+        });
+    });
+
+    // Custom validation for MSID
+    $(window).adaptTo("foundation-registry").register("foundation.validation.validator", {
+        selector: ".custom-msid-validation",  // Target input field with this class
+        validate: function(el) {
+            var value = el.value;
+
+            // Example validation: MSID must be exactly 5 characters long
+            if (value.length !== 5) {
+                return "MSID must be exactly 5 characters long.";
+            }
+
+            // Example validation: MSID must contain only alphanumeric characters
+            var regex = /^[A-Z0-9]+$/;  // Only uppercase letters and digits
+            if (!regex.test(value)) {
+                return "MSID must contain only uppercase letters and digits.";
+            }
+        }
+    });
+})(document, Granite.$);
+
+
