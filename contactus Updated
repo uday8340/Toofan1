@@ -272,3 +272,14 @@ listeners="{
 
    
 })(jQuery, Coral);
+
+
+
+
+
+$(document).on("dialog-ready", function() {
+    $("input[name='./textField']").on("input", function() {
+        $(this).val($(this).val().toUpperCase());
+    });
+});
+
