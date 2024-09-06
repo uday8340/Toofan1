@@ -329,4 +329,24 @@ $(document).on("dialog-ready", function() {
 })(document, Granite.$);
 
 
+....................................................................
+
+(function ($, Granite) {
+    "use strict";
+ 
+    $(document).on("dialog-ready", function () {
+        var msidField = $("input[name='./msid']");
+        if (msidField.length > 0) {
+            msidField.on("input", function () {
+                var value = $(this).val();
+                var validValue = value.replace(/[^A-Z0-9]/g, '');  // Allow only uppercase letters and numbers
+                if (value !== validValue) {
+                    $(this).val(validValue);  // Replace the invalid value with the valid one
+                }
+            });
+        }
+    });
+})(jQuery, Granite);
+
+
 
