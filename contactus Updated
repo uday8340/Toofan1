@@ -316,4 +316,17 @@ $(document).on("dialog-ready", function() {
     });
 })(document, Granite.$);
 
+......................................................................................
+
+(function(document, $) {
+    'use strict';
+    
+    $(document).on('foundation-contentloaded', function() {
+        $('.convert-uppercase').on('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+    });
+})(document, Granite.$);
+
+
 
