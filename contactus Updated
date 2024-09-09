@@ -413,5 +413,18 @@ $(document).ready(function() {
 
 let username = "nathan";let newUsername = username.toUpperCase();console.log(newUsername); // "NATHAN"
 
+....................................................
+
+<input type="text" id="fname" onkeyup="myFunction()">
+ 
+function myFunction() {
+
+  let x = document.getElementById("fname");
+
+  x.value = x.value.toUpperCase();
+
+}
+ 
+
 
 
