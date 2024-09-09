@@ -404,6 +404,10 @@ $(document).ready(function() {
 
     })(jQuery, Coral);
 
+.....................................................................................
+
+<input type="text" id="username" name="username"      pattern="[A-Z]*" title="Only uppercase letters" />
+
 });
 
 
