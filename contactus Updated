@@ -409,6 +409,9 @@ $(document).ready(function() {
 <input type="text" id="username" name="username"      pattern="[A-Z]*" title="Only uppercase letters" />
 
 });
+........................................................
+
+let username = "nathan";let newUsername = username.toUpperCase();console.log(newUsername); // "NATHAN"
 
 
 
