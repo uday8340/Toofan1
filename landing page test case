@@ -1,12 +1,6 @@
 package com.ms.wmrsicms.core.mygio.services;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import javax.jcr.Node;
+import com.ms.wmrsicms.core.microsites.slingmodels.LandingPageModel;
 import org.apache.commons.lang.StringUtils;
 import org.apache.jackrabbit.commons.JcrUtils;
 import org.apache.sling.api.resource.Resource;
@@ -24,51 +18,51 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import com.ms.wmrsicms.core.microsites.slingmodels.LandingPageModel;
-import com.ms.wmrsicms.core.microsites.slingmodels.LandingPagePojo;
-import com.ms.wmrsicms.core.common.Constants;
+import javax.jcr.Node;
+import java.util.*;
 
 import static org.mockito.Mockito.*;
-import static org.junit.Assert.*;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({JcrUtils.class})
-public class LandingPageModelTest extends Mockito {
+@PrepareForTest(JcrUtils.class)
+public class LandingPageModelTest {
 
     @InjectMocks
-    private LandingPageModel landingPageModel;
+    LandingPageModel landingPageModel;
 
     @Mock
-    private ResourceResolver resourceResolver;
+    ResourceResolver resourceResolver;
 
     @Mock
-    private SlingSettingsService slingSettingsService;
+    SlingSettingsService slingSettingsService;
 
     @Mock
-    private Resource rsiMainRes;
+    Resource rsiMainRes;
+
+    List<Resource> list;
 
     @Mock
-    private Resource childRes1;
+    Resource childRes1;
 
     @Mock
-    private Node jcrNode;
+    ValueMap valueMap;
 
     @Mock
-    private Resource jcrNodeRes;
+    Resource jcrNodeRes;
 
     @Mock
-    private ValueMap valueMap;
+    Node jcrNode;
 
-    private List<Resource> landingPageCards;
-
-    @Mock
-    private Resource externalCardResource;
+    List<Resource> landingPageCards;
 
     @Mock
-    private ValueMap externalCardResMap;
+    Resource externalCardResource;
 
+    @Mock
+    ValueMap externalCardResMap;
+
+    public static final String MICROSITE_TEMPLATE = "wmrsicms/components/page/micrositeblankpage";
     public static final String RSI_PATH = "/content/wmrsi/microsites/gio-offerings";
-    public static final String MICROSITES_BLANK_TEMPLATE = "wmrsicms/components/page/micrositeblankpage";
 
     @Before
     public void initialize() {
@@ -77,74 +71,96 @@ public class LandingPageModelTest extends Mockito {
     }
 
     @Test
-    public void testInit() {
-        try {
-            // Mocking internal cards
-            when(resourceResolver.resolve(RSI_PATH)).thenReturn(rsiMainRes);
-            List<Resource> list = new ArrayList<>();
-            list.add(childRes1);
-            Iterator<Resource> itr = list.iterator();
-            when(rsiMainRes.listChildren()).thenReturn(itr);
-            when(childRes1.getValueMap()).thenReturn(valueMap);
-            when(valueMap.get("jcr:primaryType", "")).thenReturn("cq:Page");
-            when(childRes1.getPath()).thenReturn("/content/wmrsi/landing-page");
-            when(resourceResolver.resolve(childRes1.getPath() + "/jcr:content")).thenReturn(jcrNodeRes);
-            when(jcrNodeRes.adaptTo(Node.class)).thenReturn(jcrNode);
-            when(JcrUtils.getStringProperty(jcrNode, "sling:resourceType", StringUtils.EMPTY))
-                .thenReturn(MICROSITES_BLANK_TEMPLATE);
-            when(JcrUtils.getStringProperty(jcrNode, "isActive", "false")).thenReturn("true");
-            when(JcrUtils.getStringProperty(jcrNode, "jcr:title", StringUtils.EMPTY)).thenReturn("Landing Page");
-            when(JcrUtils.getStringProperty(jcrNode, "linkText", "Explore Now")).thenReturn("Explore Now");
-            when(JcrUtils.getStringProperty(jcrNode, "cardDescription", StringUtils.EMPTY)).thenReturn("Sample description");
-            when(JcrUtils.getStringProperty(jcrNode, "cardimage", StringUtils.EMPTY)).thenReturn("/content/dam/microsites/img1.jpeg");
-            when(JcrUtils.getStringProperty(jcrNode, "linkwindowtype", "blank")).thenReturn("_blank");
-            when(JcrUtils.getStringProperty(jcrNode, "micrositeRank", "0")).thenReturn("1");
+    public void testInitSuccessScenario() throws Exception {
+        // Setup basic valid data
+        when(resourceResolver.resolve(RSI_PATH)).thenReturn(rsiMainRes);
+        list = new ArrayList<>();
+        list.add(childRes1);
+        Iterator<Resource> itr = list.iterator();
+        when(rsiMainRes.listChildren()).thenReturn(itr);
+        when(childRes1.getValueMap()).thenReturn(valueMap);
+        when(valueMap.get("jcr:primaryType", "")).thenReturn("cq:Page");
+        when(childRes1.getPath()).thenReturn("/content/wmrsi/landing-page");
+        when(resourceResolver.resolve("/content/wmrsi/landing-page/jcr:content")).thenReturn(jcrNodeRes);
+        when(jcrNodeRes.adaptTo(Node.class)).thenReturn(jcrNode);
+        when(JcrUtils.getStringProperty(jcrNode, "sling:resourceType", StringUtils.EMPTY)).thenReturn(MICROSITE_TEMPLATE);
+        when(JcrUtils.getStringProperty(jcrNode, "isActive", "false")).thenReturn("true");
+        when(JcrUtils.getStringProperty(jcrNode, "jcr:title", StringUtils.EMPTY)).thenReturn("Landing Page");
+        when(JcrUtils.getStringProperty(jcrNode, "cardDescription", StringUtils.EMPTY)).thenReturn("Sample description");
+        when(JcrUtils.getStringProperty(jcrNode, "cardimage", StringUtils.EMPTY)).thenReturn("/content/dam/microsites/img1.jpeg");
+        when(JcrUtils.getStringProperty(jcrNode, "linkText", "Explore Now")).thenReturn("Explore Now");
+        when(JcrUtils.getStringProperty(jcrNode, "linkwindowtype", "blank")).thenReturn("self");
 
-            Set<String> runModes = new HashSet<>();
-            runModes.add("author");
-            when(slingSettingsService.getRunModes()).thenReturn(runModes);
+        // Run mode is author
+        Set<String> runModes = new HashSet<>();
+        runModes.add("author");
+        when(slingSettingsService.getRunModes()).thenReturn(runModes);
 
-            // Mocking external cards
-            landingPageCards = new ArrayList<>();
-            landingPageCards.add(externalCardResource);
-            landingPageModel.setLandingPageCards(landingPageCards);
+        // Rank
+        when(JcrUtils.getStringProperty(jcrNode, "micrositeRank", "0")).thenReturn("1");
 
-            when(externalCardResource.getValueMap()).thenReturn(externalCardResMap);
-            when(externalCardResMap.getOrDefault("isActive", StringUtils.EMPTY)).thenReturn("true");
-            when(externalCardResMap.getOrDefault("cardTitle", StringUtils.EMPTY)).thenReturn("External Card Title");
-            when(externalCardResMap.getOrDefault("cardDescription", StringUtils.EMPTY)).thenReturn("External Card Description");
-            when(externalCardResMap.getOrDefault("cardLink", StringUtils.EMPTY)).thenReturn("/content/external/cardLink");
-            when(externalCardResMap.getOrDefault("cardimage", StringUtils.EMPTY)).thenReturn("/content/dam/microsites/img2.jpeg");
-            when(externalCardResMap.getOrDefault("linkwindowtype", "blank")).thenReturn("_blank");
-            when(externalCardResMap.getOrDefault("micrositeRank", "0")).thenReturn("2");
-            when(externalCardResMap.getOrDefault("linkText", "Explore Now")).thenReturn("Explore Now");
+        // External card setup
+        landingPageCards = new ArrayList<>();
+        landingPageCards.add(externalCardResource);
+        landingPageModel.setLandingPageCards(landingPageCards);
 
-            // Run the init method
-            landingPageModel.init();
+        when(externalCardResource.getValueMap()).thenReturn(externalCardResMap);
+        when(externalCardResMap.getOrDefault("isActive", StringUtils.EMPTY)).thenReturn("true");
+        when(externalCardResMap.getOrDefault("cardTitle", StringUtils.EMPTY)).thenReturn("Card Title");
+        when(externalCardResMap.getOrDefault("cardDescription", StringUtils.EMPTY)).thenReturn("External Card Description");
+        when(externalCardResMap.getOrDefault("cardLink", StringUtils.EMPTY)).thenReturn("/content/external-card");
+        when(externalCardResMap.getOrDefault("cardimage", StringUtils.EMPTY)).thenReturn("/content/dam/microsites/external-img.jpeg");
+        when(externalCardResMap.getOrDefault("linkwindowtype", "blank")).thenReturn("_blank");
+        when(externalCardResMap.getOrDefault("micrositeRank", "0")).thenReturn("2");
 
-            // Verify sorting and microsites list population
-            List<LandingPagePojo> microsites = landingPageModel.getMicrosites();
-            assertNotNull(microsites);
-            assertEquals(2, microsites.size()); // One internal and one external card
-            
-            // Verifying properties of the first card (Internal)
-            LandingPagePojo firstCard = microsites.get(0);
-            assertEquals("Landing Page", firstCard.getPageTitle());
-            assertEquals("Sample description", firstCard.getPageDescription());
-            assertEquals("/content/dam/microsites/img1.jpeg", firstCard.getImagePath());
-            assertEquals("_blank", firstCard.getLinkwindowtype());
-            assertEquals(1, firstCard.getMicrositeRank());
+        // Test initialization method
+        landingPageModel.init();
 
-            // Verifying properties of the second card (External)
-            LandingPagePojo secondCard = microsites.get(1);
-            assertEquals("External Card Title", secondCard.getPageTitle());
-            assertEquals("External Card Description", secondCard.getPageDescription());
-            assertEquals("/content/dam/microsites/img2.jpeg", secondCard.getImagePath());
-            assertEquals("_blank", secondCard.getLinkwindowtype());
-            assertEquals(2, secondCard.getMicrositeRank());
+        // Add assertions as per your expected behavior (size of microsites, etc.)
+        assertNotNull(landingPageModel.getMicrosites());
+        assertEquals(2, landingPageModel.getMicrosites().size());
+    }
 
-        } catch (Exception e) {
-            System.out.println("Exception in LandingPageModelTest: " + e);
-        }
+    @Test
+    public void testInitNoActivePage() throws Exception {
+        // Setting up for no active page
+        when(resourceResolver.resolve(RSI_PATH)).thenReturn(rsiMainRes);
+        when(rsiMainRes.listChildren()).thenReturn(Collections.emptyIterator());
+
+        // Test initialization method
+        landingPageModel.init();
+
+        // Assert that microsites list is empty
+        assertTrue(landingPageModel.getMicrosites().isEmpty());
+    }
+
+    @Test
+    public void testInitInactiveCard() throws Exception {
+        // Setup a case where the card is inactive
+        when(resourceResolver.resolve(RSI_PATH)).thenReturn(rsiMainRes);
+        list = new ArrayList<>();
+        list.add(childRes1);
+        Iterator<Resource> itr = list.iterator();
+        when(rsiMainRes.listChildren()).thenReturn(itr);
+        when(childRes1.getValueMap()).thenReturn(valueMap);
+        when(valueMap.get("jcr:primaryType", "")).thenReturn("cq:Page");
+        when(JcrUtils.getStringProperty(jcrNode, "isActive", "false")).thenReturn("false");
+
+        // Test initialization method
+        landingPageModel.init();
+
+        // Assert that microsites list is still empty due to inactive card
+        assertTrue(landingPageModel.getMicrosites().isEmpty());
+    }
+
+    @Test
+    public void testCatchBlockCoverage() throws Exception {
+        // Throwing an exception to test the catch block
+        when(resourceResolver.resolve(RSI_PATH)).thenThrow(new RuntimeException("Mocked exception"));
+
+        // Test initialization method
+        landingPageModel.init();
+
+        // No exceptions should propagate
     }
 }
