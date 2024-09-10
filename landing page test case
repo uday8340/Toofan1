@@ -61,7 +61,6 @@ public class LandingPageModelTest {
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        landingPageModel.init();
     }
 
     @Test
@@ -70,19 +69,19 @@ public class LandingPageModelTest {
         when(currentPage.getPath()).thenReturn("/content/testPage");
         when(resourceResolver.resolve("/content/testPage/jcr:content")).thenReturn(rsiMainRes);
         when(rsiMainRes.getValueMap()).thenReturn(Collections.singletonMap(Constants.CQ_TEMPLATE, Constants.MICROSITE_LANDING_TEMPLATE));
-        
+
         // Mock child resources
         Resource childRes1 = mock(Resource.class);
         when(childRes1.getValueMap()).thenReturn(Collections.singletonMap("jcr:primaryType", "cq:Page"));
         when(childRes1.getPath()).thenReturn("/content/childPage1");
-        
+
         Resource childRes2 = mock(Resource.class);
         when(childRes2.getValueMap()).thenReturn(Collections.singletonMap("jcr:primaryType", "cq:Page"));
         when(childRes2.getPath()).thenReturn("/content/childPage2");
-        
+
         Iterator<Resource> childResIterator = Arrays.asList(childRes1, childRes2).iterator();
         when(rsiMainRes.listChildren()).thenReturn(childResIterator);
-        
+
         // Mock JCR node
         when(resourceResolver.resolve("/content/childPage1/jcr:content")).thenReturn(childRes1);
         when(childRes1.adaptTo(Node.class)).thenReturn(jcrNode);
@@ -94,7 +93,7 @@ public class LandingPageModelTest {
         when(JcrUtils.getStringProperty(jcrNode, "LinkText", "Explore Now")).thenReturn("Explore Now");
         when(JcrUtils.getStringProperty(jcrNode, "Linkwindowtype", "self")).thenReturn("self");
         when(JcrUtils.getStringProperty(jcrNode, "micrositeRank", "0")).thenReturn("1");
-        
+
         // External card configuration
         List<Resource> externalCards = new ArrayList<>();
         Resource externalCard = mock(Resource.class);
@@ -109,43 +108,47 @@ public class LandingPageModelTest {
         when(valueMap.getOrDefault("micrositeRank", "0")).thenReturn("2");
         when(valueMap.getOrDefault("LinkText", "Explore Now")).thenReturn("Check it out");
         externalCards.add(externalCard);
-        when(landingPageModel.getLandingPageCards()).thenReturn(externalCards);
-        
+        landingPageModel.setLandingPageCards(externalCards);
+
         // Call init method
         landingPageModel.init();
-        
+
         // Verify results
         List<LandingPagePojo> microsites = landingPageModel.getMicrosites();
         assertNotNull(microsites);
         assertEquals(2, microsites.size());
-        
+
         LandingPagePojo firstPojo = microsites.get(0);
         assertEquals("Title1", firstPojo.getPageTitle());
         assertEquals("Description1", firstPojo.getPageDescription());
         assertEquals("imagePath1", firstPojo.getImagePath());
         assertEquals("/content/childPage1/auth.html", firstPojo.getPageLink());
-        assertEquals("1", firstPojo.getMicrositeRank());
+        assertEquals(1, firstPojo.getMicrositeRank());
         assertEquals("Explore Now", firstPojo.getLinkText());
-        
+
         LandingPagePojo externalPojo = microsites.get(1);
         assertEquals("External Title", externalPojo.getPageTitle());
         assertEquals("External Description", externalPojo.getPageDescription());
         assertEquals("externalImagePath", externalPojo.getImagePath());
         assertEquals("/externalLink", externalPojo.getPageLink());
-        assertEquals("2", externalPojo.getMicrositeRank());
+        assertEquals(2, externalPojo.getMicrositeRank());
         assertEquals("Check it out", externalPojo.getLinkText());
     }
-    
+
     @Test
     public void testCheckInternalLink() {
+        // Since checkInternalLink is private, we verify its effects through public methods
         LandingPagePojo landingPojo = new LandingPagePojo();
-        
+
+        // Simulate internal link
         landingPageModel.checkInternalLink(landingPojo, "/content/internalPage");
         assertTrue(landingPojo.getIsInternalLink());
-        
+
+        // Simulate external link
         landingPageModel.checkInternalLink(landingPojo, "http://externaldomain.com/page");
         assertFalse(landingPojo.getIsInternalLink());
-        
+
+        // Simulate link with dispatcher hostname
         when(commonConfiguration.getDispatcherHostName()).thenReturn("dispatcherHost");
         landingPageModel.checkInternalLink(landingPojo, "http://dispatcherHost/page");
         assertTrue(landingPojo.getIsInternalLink());
