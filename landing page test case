@@ -1,11 +1,18 @@
 @Test
 public void testInit_withValidMicrosite() throws Exception {
-    // Mock the resource resolver to return valid resource
+    // Mock resource resolver to return valid resource
     when(resourceResolver.resolve(validPath + "/jcr:content")).thenReturn(rsiMainRes);
     
+    // Make sure rsiMainRes is not null (add debug here)
+    assertNotNull(rsiMainRes, "rsiMainRes is null");
+
     // Mock the template to match the microsite template
     ValueMap rsiValueMap = mock(ValueMap.class);
     when(rsiMainRes.getValueMap()).thenReturn(rsiValueMap);
+    
+    // Make sure ValueMap is mocked correctly
+    assertNotNull(rsiValueMap, "rsiValueMap is null");
+
     when(rsiValueMap.get(Constants.CQ_TEMPLATE, String.class)).thenReturn(Constants.MICROSITE_LANDING_TEMPLATE);
     when(rsiMainRes.hasChildren()).thenReturn(true);
 
@@ -14,11 +21,14 @@ public void testInit_withValidMicrosite() throws Exception {
     when(rsiMainRes.listChildren()).thenReturn(childResourcesIterator);
     when(childResourcesIterator.hasNext()).thenReturn(true, false);
     when(childResourcesIterator.next()).thenReturn(childResource);
-    
+
     // Mock child resource values
     when(childResource.getPath()).thenReturn("/content/mysite/child");
     Resource jcrContentResource = mock(Resource.class);
     when(resourceResolver.resolve("/content/mysite/child/jcr:content")).thenReturn(jcrContentResource);
+    
+    // Make sure the child resource and its JCR content are not null
+    assertNotNull(jcrContentResource, "jcrContentResource is null");
     
     // Mock JCR node adaptation and properties
     when(jcrContentResource.adaptTo(Node.class)).thenReturn(jcrNode);
@@ -34,7 +44,8 @@ public void testInit_withValidMicrosite() throws Exception {
     when(commonConfiguration.getRsiDomainName()).thenReturn("rsi-domain");
 
     // Initialize the model
-    landingPageModel.init();
+    landingPageModel.init();  // Ensure that init() completes without a NullPointerException
+    
     List<LandingPagePojo> microsites = landingPageModel.getMicrosites();
 
     // Assertions
