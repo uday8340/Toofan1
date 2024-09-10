@@ -1,0 +1,119 @@
+import com.google.gson.Gson;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ValueMap;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.mockito.runners.MockitoJUnitRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.jcr.Node;
+import java.util.*;
+
+import static org.mockito.Mockito.*;
+
+@RunWith(MockitoJUnitRunner.class)
+public class LandingPageModelTest {
+
+    @InjectMocks
+    private LandingPageModel landingPageModel;
+
+    @Mock
+    private ResourceResolver resourceResolver;
+
+    @Mock
+    private Resource currentPage;
+
+    @Mock
+    private Resource rsiMainRes;
+
+    @Mock
+    private Resource childRes;
+
+    @Mock
+    private Node jcrNode;
+
+    @Mock
+    private ValueMap valueMap;
+
+    @Mock
+    private Logger log = LoggerFactory.getLogger(LandingPageModel.class);
+
+    private List<Resource> landingPageCards;
+
+    @Before
+    public void setup() {
+        MockitoAnnotations.initMocks(this);
+        landingPageCards = new ArrayList<>();
+        landingPageModel = new LandingPageModel();
+    }
+
+    @Test
+    public void testInitWithValidResource() throws Exception {
+        // Setup the mocks
+        when(currentPage.getPath()).thenReturn("/content/site/page");
+        when(resourceResolver.resolve("/content/site/page/jcr:content")).thenReturn(rsiMainRes);
+        when(rsiMainRes.getValueMap()).thenReturn(valueMap);
+        when(valueMap.get("cq:template", "")).thenReturn("microsite-template");
+
+        when(rsiMainRes.listChildren()).thenReturn(Collections.singletonList(childRes).iterator());
+        when(childRes.getValueMap()).thenReturn(valueMap);
+        when(valueMap.get("jcr:primaryType", "")).thenReturn("cq:Page");
+
+        when(resourceResolver.resolve(childRes.getPath() + "/jcr:content")).thenReturn(rsiMainRes);
+        when(rsiMainRes.adaptTo(Node.class)).thenReturn(jcrNode);
+        when(jcrNode.getProperty("sling:resourceType")).thenReturn("microsite-landing");
+
+        // Call the init method
+        landingPageModel.init();
+
+        // Verify log calls
+        verify(log).debug("childRes path {}", childRes.getPath());
+        verify(log).debug("after sorting {}", new Gson().toJson(any()));
+    }
+
+    @Test
+    public void testInitWithoutActiveMicrosite() throws Exception {
+        // Setup
+        when(currentPage.getPath()).thenReturn("/content/site/page");
+        when(resourceResolver.resolve("/content/site/page/jcr:content")).thenReturn(rsiMainRes);
+        when(rsiMainRes.getValueMap()).thenReturn(valueMap);
+        when(valueMap.get("cq:template", "")).thenReturn("microsite-template");
+
+        when(rsiMainRes.listChildren()).thenReturn(Collections.emptyIterator());
+
+        // Call the init method
+        landingPageModel.init();
+
+        // Verify that the log was called with appropriate messages
+        verify(log).debug("after sorting {}", new Gson().toJson(any()));
+    }
+
+    @Test
+    public void testSortingLogic() {
+        // Add test data
+        LandingPagePojo page1 = new LandingPagePojo();
+        page1.setMicrositeRank(2);
+        LandingPagePojo page2 = new LandingPagePojo();
+        page2.setMicrositeRank(1);
+
+        List<LandingPagePojo> microsites = Arrays.asList(page1, page2);
+
+        // Sort the microsites
+        Collections.sort(microsites, new Comparator<LandingPagePojo>() {
+            @Override
+            public int compare(LandingPagePojo o1, LandingPagePojo o2) {
+                return o1.getMicrositeRank() - o2.getMicrositeRank();
+            }
+        });
+
+        // Verify that the list was sorted correctly
+        assertEquals(1, microsites.get(0).getMicrositeRank());
+        assertEquals(2, microsites.get(1).getMicrositeRank());
+    }
+}
