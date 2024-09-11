@@ -1,3 +1,5 @@
+
+   
 @Test
 public void testInit_SuccessCase_WithMicrosites() throws Exception {
     // Mocking Resource and ResourceResolver
@@ -5,12 +7,13 @@ public void testInit_SuccessCase_WithMicrosites() throws Exception {
     when(rsiMainRes.getValueMap()).thenReturn(valueMap);
 
     // Mocking ValueMap to return the MICROSITE_LANDING_TEMPLATE for CQ_TEMPLATE
-    when(valueMap.get(Constants.CQ_TEMPLATE, StringUtils.EMPTY)).thenReturn(Constants.MICROSITE_LANDING_TEMPLATE);
+    when(valueMap.get(Constants.CQ_TEMPLATE, StringUtils.EMPTY))
+        .thenReturn(Constants.MICROSITE_LANDING_TEMPLATE);
 
     // Mocking iterator for listChildren and Resource child
     Iterator<Resource> iterator = Mockito.mock(Iterator.class);
     when(rsiMainRes.listChildren()).thenReturn(iterator);
-    when(iterator.hasNext()).thenReturn(true, false);  // first true, then false to simulate only one child
+    when(iterator.hasNext()).thenReturn(true, false);  // Simulate one child
 
     // Mock the child Resource and its ValueMap
     when(iterator.next()).thenReturn(childRes1);
@@ -50,8 +53,10 @@ public void testInit_SuccessCase_WithMicrosites() throws Exception {
     // Assertions to verify the state of microsites
     List<LandingPagePojo> microsites = landingPageModel.getMicrosites();
     assertNotNull(microsites);
+    // Check that we have exactly 1 microsite added
     assertEquals(1, microsites.size());
 
+    // Validate the values of the microsite object
     LandingPagePojo landingObject = microsites.get(0);
     assertEquals("Landing Page", landingObject.getPageTitle());
     assertEquals("Sample description", landingObject.getPageDescription());
@@ -61,6 +66,7 @@ public void testInit_SuccessCase_WithMicrosites() throws Exception {
     assertEquals("_self", landingObject.getLinkwindowtype());
     assertEquals("/auth/landing-page.html", landingObject.getPageLink());  // Since it's in author run mode
 }
+
 
 @Test
 public void testInit_EmptyOrNonMatchingResourceType() throws Exception {
