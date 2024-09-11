@@ -1,191 +1,34 @@
-package com.ms.wmrsicms.core.microsites.slingmodels;
+(function($, $document) {
+    "use strict";
 
-import com.day.cq.wcm.api.Page;
-import com.ms.wmrsicms.core.common.Constants;
-import com.ms.wmrsicms.core.services.CommonConfiguration;
-import com.ms.wmrsicms.core.servlets.CommonUtil;
-import org.apache.jackrabbit.commons.JcrUtils;
-import org.apache.sling.api.SlingHttpServletRequest;
-import org.apache.sling.api.resource.Resource;
-import org.apache.sling.api.resource.ResourceResolver;
-import org.apache.sling.api.resource.ValueMap;
-import org.apache.sling.settings.SlingSettingsService;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.mockito.runners.MockitoJUnitRunner;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+    $document.on("foundation-contentloaded", function(e) {
+        // Custom Email Validation
+        $.validator.register({
+            selector: "[data-validation='emailValidation']",
+            validate: function(value) {
+                // Basic email structure check (presence of @)
+                var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-import javax.jcr.Node;
-import java.util.*;
+                // Check for special characters or spaces
+                var invalidCharsPattern = /[^a-zA-Z0-9@._-]/;
 
-import static org.mockito.Mockito.*;
+                if (!emailPattern.test(value)) {
+                    return "Invalid email syntax.";
+                }
 
-@RunWith(MockitoJUnitRunner.class)
-public class LandingPageModelTest {
+                if (invalidCharsPattern.test(value)) {
+                    return "Email should not contain spaces or special characters.";
+                }
 
-    @InjectMocks
-    private LandingPageModel landingPageModel;
+                // Validate the domain (after @)
+                var domainPart = value.split('@')[1];
+                if (domainPart && domainPart.split('.').length < 2) {
+                    return "Invalid domain name format.";
+                }
 
-    @Mock
-    private ResourceResolver resourceResolver;
+                return null; // Valid email
+            }
+        });
+    });
 
-    @Mock
-    private SlingSettingsService slingSettingsService;
-
-    @Mock
-    private Page currentPage;
-
-    @Mock
-    private CommonConfiguration commonConfiguration;
-
-    @Mock
-    private Resource resource;
-
-    @Mock
-    private Node node;
-
-    @Mock
-    private SlingHttpServletRequest request;
-
-    @Mock
-    private Resource childResource;
-
-    @Mock
-    private ValueMap valueMap;
-
-    @Before
-    public void setUp() {
-        MockitoAnnotations.initMocks(this);
-    }
-
-    @Test
-    public void testInitWithValidData() throws Exception {
-        // Setup mocks
-        String path = "/content/page/jcr:content";
-        when(currentPage.getPath()).thenReturn(path);
-
-        // Mock the resource and ValueMap
-        Resource rsiMainRes = mock(Resource.class);
-        ValueMap rsiValueMap = mock(ValueMap.class);
-        when(rsiMainRes.getValueMap()).thenReturn(rsiValueMap);
-        when(rsiValueMap.get(Constants.CQ_TEMPLATE)).thenReturn(Constants.MICROSITE_LANDING_TEMPLATE);
-
-        when(resourceResolver.resolve(path)).thenReturn(rsiMainRes);
-
-        // Mock iterator
-        Iterator<Resource> iterator = mock(Iterator.class);
-        when(rsiMainRes.listChildren()).thenReturn(iterator);
-        when(iterator.hasNext()).thenReturn(true, true, false);
-        when(iterator.next()).thenReturn(childResource);
-
-        // Mock child resource
-        when(childResource.getValueMap()).thenReturn(valueMap);
-        when(valueMap.get("jcr:primaryType")).thenReturn("cq:Page");
-        when(resourceResolver.resolve(childResource.getPath() + "/jcr:content")).thenReturn(resource);
-        when(resource.adaptTo(Node.class)).thenReturn(node);
-
-        // Mock Node properties
-        when(JcrUtils.getStringProperty(node, "sling:resourceType", "")).thenReturn(Constants.MICROSITE_RESOURCE_TYPE);
-        when(JcrUtils.getStringProperty(node, "isActive", "false")).thenReturn("true");
-        when(JcrUtils.getStringProperty(node, "jcr:title", "")).thenReturn("Title");
-        when(JcrUtils.getStringProperty(node, "cardDescription", "")).thenReturn("Description");
-        when(JcrUtils.getStringProperty(node, "cardimage", "")).thenReturn("ImagePath");
-        when(JcrUtils.getStringProperty(node, "LinkText", "Explore Now")).thenReturn("LinkText");
-        when(JcrUtils.getStringProperty(node, "Linkwindowtype", "self")).thenReturn("self");
-        when(JcrUtils.getStringProperty(node, "micrositeRank", "0")).thenReturn("1");
-        when(slingSettingsService.getRunModes()).thenReturn(Collections.singleton("author"));
-        when(commonConfiguration.getDispatcherHostName()).thenReturn("dispatcherHostName");
-        when(commonConfiguration.getRsiDomainName()).thenReturn("rsiDomainName");
-
-        // Setup external card data
-        List<Resource> externalCards = new ArrayList<>();
-        externalCards.add(resource);
-        landingPageModel.setLandingPageCards(externalCards);
-
-        ValueMap externalValueMap = mock(ValueMap.class);
-        when(externalValueMap.getOrDefault("isActive", "")).thenReturn("true");
-        when(externalValueMap.getOrDefault("cardTitle", "")).thenReturn("External Title");
-        when(externalValueMap.getOrDefault("cardDescription", "")).thenReturn("External Description");
-        when(externalValueMap.getOrDefault("cardLink", "")).thenReturn("/external/link");
-        when(externalValueMap.getOrDefault("cardimage", "")).thenReturn("External ImagePath");
-        when(externalValueMap.getOrDefault("Linkwindowtype", "_blank")).thenReturn("_blank");
-        when(externalValueMap.getOrDefault("micrositeRank", "0")).thenReturn("2");
-        when(externalValueMap.getOrDefault("LinkText", "Explore Now")).thenReturn("External LinkText");
-        when(resource.getValueMap()).thenReturn(externalValueMap);
-
-        // Run the method
-        landingPageModel.init();
-
-        // Verify interactions
-        verify(resourceResolver, times(1)).resolve(path);
-        verify(rsiMainRes, times(1)).getValueMap();
-        verify(rsiValueMap, times(1)).get(Constants.CQ_TEMPLATE);
-        verify(rsiMainRes, times(1)).listChildren();
-        verify(iterator, times(2)).hasNext();
-        verify(iterator, times(2)).next();
-        verify(childResource, times(1)).getValueMap();
-        verify(resource, times(1)).adaptTo(Node.class);
-        verify(node, times(4)).getProperty(anyString());
-    }
-
-    @Test
-    public void testCheckInternalLink() {
-        LandingPagePojo pojo = new LandingPagePojo();
-
-        // Test with internal link
-        when(commonConfiguration.getDispatcherHostName()).thenReturn("dispatcherHostName");
-        when(commonConfiguration.getRsiDomainName()).thenReturn("rsiDomainName");
-
-        landingPageModel.checkInternalLink(pojo, "/content/some/path");
-        // Since we cannot use assertions, ensure no exception occurs
-
-        landingPageModel.checkInternalLink(pojo, "http://example.com");
-        // Since we cannot use assertions, ensure no exception occurs
-    }
-
-    @Test
-    public void testExceptionHandlingInInit() throws Exception {
-        // Simulate exception in init
-        when(resourceResolver.resolve(anyString())).thenThrow(new RuntimeException("Test Exception"));
-        
-        // Run the method
-        landingPageModel.init();
-        
-        // Verify interactions
-        verify(resourceResolver, times(1)).resolve(anyString());
-    }
-
-    @Test
-    public void testExceptionHandlingInCheckInternalLink() {
-        // Simulate exception in checkInternalLink
-        when(commonConfiguration.getDispatcherHostName()).thenThrow(new RuntimeException("Test Exception"));
-
-        LandingPagePojo pojo = new LandingPagePojo();
-        landingPageModel.checkInternalLink(pojo, "/content/some/path");
-        // Since we cannot use assertions, ensure no exception occurs
-    }
-}
-.....................
-  @Test
-    public void testGetMicrosites() {
-        // Prepare mock data
-        List<LandingPagePojo> expectedMicrosites = new ArrayList<>();
-        LandingPagePojo pojo = new LandingPagePojo();
-        pojo.setPageTitle("Test Page");
-        expectedMicrosites.add(pojo);
-
-        // Manually set the microsites list in LandingPageModel
-        landingPageModel.setMicrosites(expectedMicrosites);
-
-        // Call the method to be tested
-        List<LandingPagePojo> result = landingPageModel.getMicrosites();
-
-        // Verify the result (this is optional, since you want to avoid assert statements)
-        assertEquals(expectedMicrosites, result);
-    }
-}
+})(jQuery, jQuery(document));
