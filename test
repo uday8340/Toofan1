@@ -170,3 +170,22 @@ public class LandingPageModelTest {
         // Since we cannot use assertions, ensure no exception occurs
     }
 }
+.....................
+  @Test
+    public void testGetMicrosites() {
+        // Prepare mock data
+        List<LandingPagePojo> expectedMicrosites = new ArrayList<>();
+        LandingPagePojo pojo = new LandingPagePojo();
+        pojo.setPageTitle("Test Page");
+        expectedMicrosites.add(pojo);
+
+        // Manually set the microsites list in LandingPageModel
+        landingPageModel.setMicrosites(expectedMicrosites);
+
+        // Call the method to be tested
+        List<LandingPagePojo> result = landingPageModel.getMicrosites();
+
+        // Verify the result (this is optional, since you want to avoid assert statements)
+        assertEquals(expectedMicrosites, result);
+    }
+}
