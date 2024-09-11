@@ -55,3 +55,81 @@
         assertEquals(2, landingPageModel.getMicrosites().size()); // Assuming 2 microsites should be present
     }
 }
+
+.........
+
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.mock;
+import static org.mockito.MockitoAnnotations.initMocks;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class LandingPageModelTest {
+
+    @InjectMocks
+    private LandingPageModel landingPageModel;
+
+    @Mock
+    private ResourceResolver resourceResolver;
+
+    @Mock
+    private SlingSettingsService slingSettingsService;
+
+    // Other mocks...
+
+    private List<LandingPagePojo> micrositeList;
+
+    @Before
+    public void setUp() {
+        MockitoAnnotations.initMocks(this);
+
+        // Initialize micrositeList
+        micrositeList = new ArrayList<>();
+        LandingPagePojo pojo1 = new LandingPagePojo();
+        pojo1.setPageTitle("Title 1");
+        pojo1.setPageDescription("Description 1");
+        pojo1.setImagePath("/path/to/image1.jpg");
+        pojo1.setPageLink("/link1");
+        pojo1.setMicrositeRank(1);
+        micrositeList.add(pojo1);
+
+        LandingPagePojo pojo2 = new LandingPagePojo();
+        pojo2.setPageTitle("Title 2");
+        pojo2.setPageDescription("Description 2");
+        pojo2.setImagePath("/path/to/image2.jpg");
+        pojo2.setPageLink("/link2");
+        pojo2.setMicrositeRank(2);
+        micrositeList.add(pojo2);
+
+        // Set the microsites list in the landingPageModel
+        landingPageModel.setMicrosites(micrositeList);
+    }
+
+    @Test
+    public void testGetMicrosites() {
+        List<LandingPagePojo> result = landingPageModel.getMicrosites();
+
+        assertEquals(2, result.size());
+        assertEquals("Title 1", result.get(0).getPageTitle());
+        assertEquals("Description 1", result.get(0).getPageDescription());
+        assertEquals("/path/to/image1.jpg", result.get(0).getImagePath());
+        assertEquals("/link1", result.get(0).getPageLink());
+        assertEquals(1, result.get(0).getMicrositeRank());
+
+        assertEquals("Title 2", result.get(1).getPageTitle());
+        assertEquals("Description 2", result.get(1).getPageDescription());
+        assertEquals("/path/to/image2.jpg", result.get(1).getImagePath());
+        assertEquals("/link2", result.get(1).getPageLink());
+        assertEquals(2, result.get(1).getMicrositeRank());
+    }
+}
+
