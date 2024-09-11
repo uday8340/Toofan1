@@ -1,0 +1,141 @@
+package com.ms.wmrsicms.core.microsites.slingmodels;
+
+import com.day.cq.wcm.api.Page;
+import com.google.gson.Gson;
+import com.ms.wmrsicms.core.common.Constants;
+import com.ms.wmrsicms.core.services.CommonConfiguration;
+import com.ms.wmrsicms.core.servlets.CommonUtil;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.jackrabbit.commons.JcrUtils;
+import org.apache.sling.api.SlingHttpServletRequest;
+import org.apache.sling.api.resource.*;
+import org.apache.sling.settings.SlingSettingsService;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.PostConstruct;
+import javax.jcr.Node;
+import java.util.*;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+public class LandingPageModelTest {
+
+    @Mock
+    private ResourceResolver resourceResolver;
+
+    @Mock
+    private SlingHttpServletRequest request;
+
+    @Mock
+    private Resource resource;
+
+    @Mock
+    private Page currentPage;
+
+    @Mock
+    private CommonConfiguration commonConfiguration;
+
+    @Mock
+    private SlingSettingsService slingSettingsService;
+
+    @InjectMocks
+    private LandingPageModel landingPageModel;
+
+    @Before
+    public void setUp() {
+        MockitoAnnotations.initMocks(this);
+        landingPageModel.init(); // Call init to set up the model
+    }
+
+    @Test
+    public void testInitWithValidData() throws Exception {
+        // Setup mock behavior
+        String pagePath = "/content/microsite";
+        when(currentPage.getPath()).thenReturn(pagePath);
+
+        Resource rsiMainRes = mock(Resource.class);
+        ValueMap valueMap = mock(ValueMap.class);
+        when(rsiMainRes.getValueMap()).thenReturn(valueMap);
+        when(valueMap.get(Constants.CQ_TEMPLATE, String.class)).thenReturn(Constants.MICROSITE_LANDONG_TEMPLATE);
+        when(resourceResolver.resolve(pagePath + "/jcr:content")).thenReturn(rsiMainRes);
+
+        Node jcrNode = mock(Node.class);
+        when(resourceResolver.resolve(any(String.class))).thenReturn(mock(Resource.class));
+        when(resourceResolver.resolve(any(String.class)).adaptTo(Node.class)).thenReturn(jcrNode);
+
+        // Mock properties
+        when(JcrUtils.getStringProperty(jcrNode, "sling:resourceType", StringUtils.EMPTY)).thenReturn(Constants.MICROSITE_RESOURCE_TYPE);
+        when(JcrUtils.getStringProperty(jcrNode, "isActive", "false")).thenReturn("true");
+
+        // Add more mocks as needed for child resources and properties
+        // ...
+
+        landingPageModel.init();
+
+        // Add assertions if needed to verify behavior
+    }
+
+    @Test
+    public void testInitWithEmptyData() {
+        // Setup mock behavior for empty data
+        when(currentPage.getPath()).thenReturn("/content/empty");
+        when(resourceResolver.resolve(any(String.class))).thenReturn(null);
+
+        landingPageModel.init();
+
+        // Add assertions if needed to verify behavior
+    }
+
+    @Test
+    public void testCheckInternalLinkWithInternalLink() {
+        LandingPagePojo landingPagePojo = new LandingPagePojo();
+        landingPageModel.checkInternalLink(landingPagePojo, "/content/some/internal/link");
+
+        // Add assertions if needed to verify internal link setting
+    }
+
+    @Test
+    public void testCheckInternalLinkWithExternalLink() {
+        LandingPagePojo landingPagePojo = new LandingPagePojo();
+        landingPageModel.checkInternalLink(landingPagePojo, "http://external-link.com");
+
+        // Add assertions if needed to verify external link setting
+    }
+
+    @Test
+    public void testSortMicrosites() {
+        // Add test logic for sorting microsites
+        // This would include setting up microsites with different ranks and verifying the sort order
+    }
+
+    // Additional tests for edge cases, exceptions, and different configurations
+
+    @Test
+    public void testExceptionHandlingInInit() {
+        when(currentPage.getPath()).thenThrow(new RuntimeException("Test Exception"));
+
+        landingPageModel.init();
+
+        // Verify that the exception is logged
+        verifyStatic(LoggerFactory.getLogger(LandingPageModel.class));
+        LoggerFactory.getLogger(LandingPageModel.class).error(anyString(), any(Exception.class));
+    }
+
+    @Test
+    public void testExceptionHandlingInCheckInternalLink() {
+        doThrow(new RuntimeException("Test Exception")).when(commonConfiguration).getDispatcherHostName();
+
+        landingPageModel.checkInternalLink(new LandingPagePojo(), "http://some-link.com");
+
+        // Verify that the exception is logged
+        verifyStatic(LoggerFactory.getLogger(LandingPageModel.class));
+        LoggerFactory.getLogger(LandingPageModel.class).error(anyString(), any(Exception.class));
+    }
+}
