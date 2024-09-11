@@ -160,3 +160,149 @@ public class LandingPageModelTest {
         assert(landingPageModel.getMicrosites().isEmpty());
     }
 }
+........................................
+
+@Test
+public void testInit_ResourceResolverThrowsException() throws Exception {
+    // Simulate an exception when resolving the resource
+    when(resourceResolver.resolve(RSI_PATH)).thenThrow(new RuntimeException("Simulated exception"));
+
+    // Execute init method
+    landingPageModel.init();
+
+    // Validate that the microsites list remains empty after the exception
+    assertTrue(landingPageModel.getMicrosites().isEmpty());
+}
+
+@Test
+public void testInit_NumberFormatException() throws Exception {
+    // Simulate a resource resolving successfully
+    when(resourceResolver.resolve(RSI_PATH)).thenReturn(rsiMainRes);
+    when(rsiMainRes.getValueMap()).thenReturn(valueMap);
+
+    // Simulate a child resource with invalid micrositeRank
+    when(rsiMainRes.listChildren()).thenReturn(Arrays.asList(childRes1).iterator());
+    when(childRes1.getValueMap()).thenReturn(valueMap);
+    when(valueMap.get("micrositeRank")).thenReturn("invalid-number");
+
+    // Execute init method
+    landingPageModel.init();
+
+    // Validate microsites list is empty after a NumberFormatException
+    assertTrue(landingPageModel.getMicrosites().isEmpty());
+}
+....................................
+@Test
+public void testInit_InactiveResource() throws Exception {
+    // Simulate a resource resolving successfully
+    when(resourceResolver.resolve(RSI_PATH)).thenReturn(rsiMainRes);
+    when(rsiMainRes.getValueMap()).thenReturn(valueMap);
+
+    // Simulate inactive resource (isActive == false)
+    when(valueMap.get("isActive", "false")).thenReturn("false");
+
+    // Execute init method
+    landingPageModel.init();
+
+    // Validate microsites list remains empty since the resource is inactive
+    assertTrue(landingPageModel.getMicrosites().isEmpty());
+}
+
+@Test
+public void testInit_ActiveResource() throws Exception {
+    // Simulate a resource resolving successfully
+    when(resourceResolver.resolve(RSI_PATH)).thenReturn(rsiMainRes);
+    when(rsiMainRes.getValueMap()).thenReturn(valueMap);
+
+    // Simulate active resource (isActive == true)
+    when(valueMap.get("isActive", "false")).thenReturn("true");
+
+    // Execute init method
+    landingPageModel.init();
+
+    // Validate microsites list is populated
+    assertFalse(landingPageModel.getMicrosites().isEmpty());
+}
+........................
+@Test
+public void testSortMicrositesByRank() throws Exception {
+    // Simulate resources with different ranks
+    when(resourceResolver.resolve(RSI_PATH)).thenReturn(rsiMainRes);
+    when(rsiMainRes.getValueMap()).thenReturn(valueMap);
+    
+    when(rsiMainRes.listChildren()).thenReturn(Arrays.asList(childRes1, childRes2).iterator());
+    
+    when(childRes1.getValueMap()).thenReturn(valueMap);
+    when(valueMap.get("micrositeRank")).thenReturn("1");
+    
+    when(childRes2.getValueMap()).thenReturn(valueMap);
+    when(valueMap.get("micrositeRank")).thenReturn("2");
+
+    // Execute init method
+    landingPageModel.init();
+
+    // Validate microsites are sorted by rank
+    List<LandingPagePojo> microsites = landingPageModel.getMicrosites();
+    assertEquals("1", microsites.get(0).getMicrositeRank());
+    assertEquals("2", microsites.get(1).getMicrositeRank());
+}
+
+@Test
+public void testSortMicrositesInvalidRank() throws Exception {
+    // Simulate a resource with an invalid rank (non-numeric)
+    when(resourceResolver.resolve(RSI_PATH)).thenReturn(rsiMainRes);
+    when(rsiMainRes.getValueMap()).thenReturn(valueMap);
+    
+    when(rsiMainRes.listChildren()).thenReturn(Arrays.asList(childRes1).iterator());
+    when(childRes1.getValueMap()).thenReturn(valueMap);
+    when(valueMap.get("micrositeRank")).thenReturn("invalid-rank");
+
+    // Execute init method
+    landingPageModel.init();
+
+    // Validate that the microsites list remains empty
+    assertTrue(landingPageModel.getMicrosites().isEmpty());
+}
+...........................................
+@Test
+public void testInit_RunModeAuthor() throws Exception {
+    Set<String> runModes = new HashSet<>();
+    runModes.add("author");
+    when(slingSettingsService.getRunModes()).thenReturn(runModes);
+
+    // Proceed with the rest of the test setup
+
+    // Validate microsites are processed correctly in author mode
+    landingPageModel.init();
+    assertFalse(landingPageModel.getMicrosites().isEmpty());
+}
+
+@Test
+public void testInit_RunModePublish() throws Exception {
+    Set<String> runModes = new HashSet<>();
+    runModes.add("publish");
+    when(slingSettingsService.getRunModes()).thenReturn(runModes);
+
+    // Proceed with the rest of the test setup
+
+    // Validate microsites are processed correctly in publish mode
+    landingPageModel.init();
+    assertFalse(landingPageModel.getMicrosites().isEmpty());
+}
+..........................
+
+@Test
+public void testInit_NoChildren() throws Exception {
+    // Simulate a resource with no child resources
+    when(resourceResolver.resolve(RSI_PATH)).thenReturn(rsiMainRes);
+    when(rsiMainRes.getValueMap()).thenReturn(valueMap);
+    
+    when(rsiMainRes.listChildren()).thenReturn(Collections.emptyIterator());
+
+    // Execute init method
+    landingPageModel.init();
+
+    // Validate microsites list is empty
+    assertTrue(landingPageModel.getMicrosites().isEmpty());
+}
+
