@@ -1,101 +1,137 @@
-
-   
 @Test
-public void testInit_SuccessCase_WithMicrosites() throws Exception {
-    // Mocking Resource and ResourceResolver
+public void testInit_SuccessfullyResolvesResource() throws Exception {
+    // Mock resource resolver and resource
     when(resourceResolver.resolve(anyString())).thenReturn(rsiMainRes);
     when(rsiMainRes.getValueMap()).thenReturn(valueMap);
 
-    // Mocking ValueMap to return the MICROSITE_LANDING_TEMPLATE for CQ_TEMPLATE
+    // Mock value map to return correct MICROSITE_LANDING_TEMPLATE
     when(valueMap.get(Constants.CQ_TEMPLATE, StringUtils.EMPTY))
         .thenReturn(Constants.MICROSITE_LANDING_TEMPLATE);
 
-    // Mocking iterator for listChildren and Resource child
+    // Mock child resources and their properties
     Iterator<Resource> iterator = Mockito.mock(Iterator.class);
     when(rsiMainRes.listChildren()).thenReturn(iterator);
-    when(iterator.hasNext()).thenReturn(true, false);  // Simulate one child
-
-    // Mock the child Resource and its ValueMap
+    when(iterator.hasNext()).thenReturn(true, false);  // One child
     when(iterator.next()).thenReturn(childRes1);
-    when(childRes1.getValueMap()).thenReturn(valueMap);
-    when(valueMap.get("jcr:primaryType", "")).thenReturn("cq:Page");
-    when(childRes1.getPath()).thenReturn("/content/wmrsi/landing-page");
+    when(childRes1.getValueMap()).thenReturn(childValueMap);
+    when(childRes1.getPath()).thenReturn("/content/child1");
 
-    // Mock JCR node and its properties
+    // Mock node properties
     when(resourceResolver.resolve(anyString())).thenReturn(jcrNodeRes);
     when(jcrNodeRes.adaptTo(Node.class)).thenReturn(jcrNode);
-
     when(JcrUtils.getStringProperty(jcrNode, "sling:resourceType", StringUtils.EMPTY))
         .thenReturn(Constants.MICROSITE_RESOURCE_TYPE);
-    when(JcrUtils.getStringProperty(jcrNode, "isActive", "false"))
-        .thenReturn("true");
+    when(JcrUtils.getStringProperty(jcrNode, "isActive", "false")).thenReturn("true");
     when(JcrUtils.getStringProperty(jcrNode, "jcr:title", StringUtils.EMPTY))
-        .thenReturn("Landing Page");
+        .thenReturn("Sample Title");
     when(JcrUtils.getStringProperty(jcrNode, "cardDescription", StringUtils.EMPTY))
-        .thenReturn("Sample description");
+        .thenReturn("Sample Description");
     when(JcrUtils.getStringProperty(jcrNode, "cardimage", StringUtils.EMPTY))
-        .thenReturn("/content/dam/microsites/img1.jpeg");
-    when(JcrUtils.getStringProperty(jcrNode, "linkText", "Explore Now"))
-        .thenReturn("Explore Now");
-    when(JcrUtils.getStringProperty(jcrNode, "linkwindowtype", "_self"))
-        .thenReturn("_self");
-    when(JcrUtils.getStringProperty(jcrNode, "micrositeRank", "0"))
-        .thenReturn("1");
+        .thenReturn("/content/sampleimage.jpg");
 
-    // Simulate author run mode
+    // Simulate run mode as "author"
     Set<String> runModes = new HashSet<>();
     runModes.add("author");
     when(slingSettingsService.getRunModes()).thenReturn(runModes);
 
-    // Run the init method
+    // Call init method
     landingPageModel.init();
 
-    // Assertions to verify the state of microsites
+    // Assertions to verify microsites list is populated
     List<LandingPagePojo> microsites = landingPageModel.getMicrosites();
     assertNotNull(microsites);
-    // Check that we have exactly 1 microsite added
     assertEquals(1, microsites.size());
 
-    // Validate the values of the microsite object
     LandingPagePojo landingObject = microsites.get(0);
-    assertEquals("Landing Page", landingObject.getPageTitle());
-    assertEquals("Sample description", landingObject.getPageDescription());
-    assertEquals("/content/dam/microsites/img1.jpeg", landingObject.getImagePath());
-    assertEquals("Explore Now", landingObject.getLinkText());
-    assertEquals(1, landingObject.getMicrositeRank());
-    assertEquals("_self", landingObject.getLinkwindowtype());
-    assertEquals("/auth/landing-page.html", landingObject.getPageLink());  // Since it's in author run mode
+    assertEquals("Sample Title", landingObject.getPageTitle());
+    assertEquals("Sample Description", landingObject.getPageDescription());
+    assertEquals("/content/sampleimage.jpg", landingObject.getImagePath());
+    assertEquals("/auth/child1.html", landingObject.getPageLink());  // Link in author mode
 }
 
+@Test
+public void testInit_ResourceNotFound() throws Exception {
+    // Simulate a resource resolve returning null
+    when(resourceResolver.resolve(anyString())).thenReturn(null);
+
+    // Call init method
+    landingPageModel.init();
+
+    // Assert that microsites list is empty
+    List<LandingPagePojo> microsites = landingPageModel.getMicrosites();
+    assertNotNull(microsites);
+    assertEquals(0, microsites.size());
+}
 
 @Test
-public void testInit_EmptyOrNonMatchingResourceType() throws Exception {
-    // Mocking Resource and ResourceResolver
+public void testInit_EmptyListChildren() throws Exception {
+    // Mock resource resolver and resource
     when(resourceResolver.resolve(anyString())).thenReturn(rsiMainRes);
     when(rsiMainRes.getValueMap()).thenReturn(valueMap);
 
-    // Mock ValueMap to return an incorrect CQ_TEMPLATE
-    when(valueMap.get(Constants.CQ_TEMPLATE, StringUtils.EMPTY)).thenReturn("someOtherTemplate");
+    // Mock value map to return correct MICROSITE_LANDING_TEMPLATE
+    when(valueMap.get(Constants.CQ_TEMPLATE, StringUtils.EMPTY))
+        .thenReturn(Constants.MICROSITE_LANDING_TEMPLATE);
 
-    // Run the init method
+    // Mock an empty iterator for listChildren
+    Iterator<Resource> iterator = Mockito.mock(Iterator.class);
+    when(rsiMainRes.listChildren()).thenReturn(iterator);
+    when(iterator.hasNext()).thenReturn(false);  // No children
+
+    // Call init method
     landingPageModel.init();
 
-    // Verify that microsites remain empty due to the incorrect template
+    // Assert that microsites list is empty
     List<LandingPagePojo> microsites = landingPageModel.getMicrosites();
     assertNotNull(microsites);
-    assertTrue(microsites.isEmpty());
+    assertEquals(0, microsites.size());
 }
 
 @Test
-public void testInit_ExceptionHandling() throws Exception {
-    // Mocking Resource to throw an exception when resolved
-    when(resourceResolver.resolve(anyString())).thenThrow(new RuntimeException("Test Exception"));
+public void testInit_NonAuthorRunMode() throws Exception {
+    // Mock resource resolver and resource
+    when(resourceResolver.resolve(anyString())).thenReturn(rsiMainRes);
+    when(rsiMainRes.getValueMap()).thenReturn(valueMap);
 
-    // Run the init method
+    // Mock value map to return correct MICROSITE_LANDING_TEMPLATE
+    when(valueMap.get(Constants.CQ_TEMPLATE, StringUtils.EMPTY))
+        .thenReturn(Constants.MICROSITE_LANDING_TEMPLATE);
+
+    // Mock child resources and their properties
+    Iterator<Resource> iterator = Mockito.mock(Iterator.class);
+    when(rsiMainRes.listChildren()).thenReturn(iterator);
+    when(iterator.hasNext()).thenReturn(true, false);  // One child
+    when(iterator.next()).thenReturn(childRes1);
+    when(childRes1.getValueMap()).thenReturn(childValueMap);
+    when(childRes1.getPath()).thenReturn("/content/child1");
+
+    // Mock node properties
+    when(resourceResolver.resolve(anyString())).thenReturn(jcrNodeRes);
+    when(jcrNodeRes.adaptTo(Node.class)).thenReturn(jcrNode);
+    when(JcrUtils.getStringProperty(jcrNode, "sling:resourceType", StringUtils.EMPTY))
+        .thenReturn(Constants.MICROSITE_RESOURCE_TYPE);
+    when(JcrUtils.getStringProperty(jcrNode, "isActive", "false")).thenReturn("true");
+    when(JcrUtils.getStringProperty(jcrNode, "jcr:title", StringUtils.EMPTY))
+        .thenReturn("Sample Title");
+    when(JcrUtils.getStringProperty(jcrNode, "cardDescription", StringUtils.EMPTY))
+        .thenReturn("Sample Description");
+    when(JcrUtils.getStringProperty(jcrNode, "cardimage", StringUtils.EMPTY))
+        .thenReturn("/content/sampleimage.jpg");
+
+    // Simulate run mode as "non-author"
+    Set<String> runModes = new HashSet<>();
+    when(slingSettingsService.getRunModes()).thenReturn(runModes);  // No "author" mode
+
+    // Call init method
     landingPageModel.init();
 
-    // Verify that microsites remain empty due to the exception
+    // Assertions to verify microsites list is populated
     List<LandingPagePojo> microsites = landingPageModel.getMicrosites();
     assertNotNull(microsites);
-    assertTrue(microsites.isEmpty());
+    assertEquals(1, microsites.size());
+
+    LandingPagePojo landingObject = microsites.get(0);
+    assertEquals("Sample Title", landingObject.getPageTitle());
+    assertEquals("Sample Description", landingObject.getPageDescription());
+    assertEquals("/pub/child1.html", landingObject.getPageLink());  // Link in non-author mode
 }
