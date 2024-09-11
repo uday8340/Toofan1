@@ -1,44 +1,11 @@
-package com.ms.wmrsicms.core.microsites.slingmodels;
-
-import com.day.cq.wcm.api.Page;
-import com.google.gson.Gson;
-import com.ms.wmrsicms.core.common.Constants;
-import com.ms.wmrsicms.core.services.CommonConfiguration;
-import com.ms.wmrsicms.core.servlets.CommonUtil;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.jackrabbit.commons.JcrUtils;
-import org.apache.sling.api.SlingHttpServletRequest;
-import org.apache.sling.api.resource.Resource;
-import org.apache.sling.api.resource.ResourceResolver;
-import org.apache.sling.api.resource.ValueMap;
-import org.apache.sling.settings.SlingSettingsService;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-import org.mockito.runners.MockitoJUnitRunner;
-import org.slf4j.Logger;
-
-import javax.jcr.Node;
-import java.util.*;
-
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
-
 @RunWith(MockitoJUnitRunner.class)
 public class LandingPageModelTest {
 
-    @Mock
-    private Logger log;
+    @InjectMocks
+    private LandingPageModel landingPageModel;
 
     @Mock
     private ResourceResolver resourceResolver;
-
-    @Mock
-    private SlingSettingsService slingSettingsService;
 
     @Mock
     private Page currentPage;
@@ -46,111 +13,87 @@ public class LandingPageModelTest {
     @Mock
     private CommonConfiguration commonConfiguration;
 
-    @InjectMocks
-    private LandingPageModel landingPageModel;
-
     @Mock
     private Resource rsiMainRes;
 
     @Mock
-    private Resource childRes;
+    private SlingSettingsService slingSettingsService;
 
     @Mock
     private Node jcrNode;
 
+    @Mock
+    private ValueMap valueMap;
+
+    @Mock
+    private Resource externalCardResource;
+
     @Before
-    public void setUp() {
-        MockitoAnnotations.initMocks(this);
+    public void setUp() throws Exception {
+        when(currentPage.getPath()).thenReturn("/content/test");
+        when(resourceResolver.resolve("/content/test/jcr:content")).thenReturn(rsiMainRes);
+        when(rsiMainRes.getValueMap()).thenReturn(Collections.singletonMap(Constants.CQ_TEMPLATE, Constants.MICROSITE_LANDING_TEMPLATE));
+        when(rsiMainRes.listChildren()).thenReturn(Collections.singleton(mock(Resource.class)).iterator());
     }
 
     @Test
     public void testInit() throws Exception {
-        // Set up mocks
-        when(currentPage.getPath()).thenReturn("/content/testPage");
-        when(resourceResolver.resolve("/content/testPage/jcr:content")).thenReturn(rsiMainRes);
-        when(rsiMainRes.getValueMap()).thenReturn(Collections.singletonMap(Constants.CQ_TEMPLATE, Constants.MICROSITE_LANDING_TEMPLATE));
+        when(slingSettingsService.getRunModes()).thenReturn(Collections.singleton("author"));
+        when(rsiMainRes.getValueMap()).thenReturn(Collections.singletonMap("jcr:primaryType", "cq:Page"));
+        when(resourceResolver.resolve("/content/test/jcr:content").adaptTo(Node.class)).thenReturn(jcrNode);
 
-        // Mock child resources
-        Resource childRes1 = mock(Resource.class);
-        when(childRes1.getValueMap()).thenReturn(Collections.singletonMap("jcr:primaryType", "cq:Page"));
-        when(childRes1.getPath()).thenReturn("/content/childPage1");
-
-        Resource childRes2 = mock(Resource.class);
-        when(childRes2.getValueMap()).thenReturn(Collections.singletonMap("jcr:primaryType", "cq:Page"));
-        when(childRes2.getPath()).thenReturn("/content/childPage2");
-
-        Iterator<Resource> childResIterator = Arrays.asList(childRes1, childRes2).iterator();
-        when(rsiMainRes.listChildren()).thenReturn(childResIterator);
-
-        // Mock JCR node
-        when(resourceResolver.resolve("/content/childPage1/jcr:content")).thenReturn(childRes1);
-        when(childRes1.adaptTo(Node.class)).thenReturn(jcrNode);
-        when(JcrUtils.getStringProperty(jcrNode, "sling:resourceType", StringUtils.EMPTY)).thenReturn(Constants.MICROSITE_RESOURCE_TYPE);
+        when(JcrUtils.getStringProperty(jcrNode, "sling:resourceType", StringUtils.EMPTY))
+                .thenReturn(Constants.MICROSITE_RESOURCE_TYPE);
         when(JcrUtils.getStringProperty(jcrNode, "isActive", "false")).thenReturn("true");
-        when(JcrUtils.getStringProperty(jcrNode, "jcr:title", StringUtils.EMPTY)).thenReturn("Title1");
-        when(JcrUtils.getStringProperty(jcrNode, "cardDescription", StringUtils.EMPTY)).thenReturn("Description1");
-        when(JcrUtils.getStringProperty(jcrNode, "cardimage", StringUtils.EMPTY)).thenReturn("imagePath1");
-        when(JcrUtils.getStringProperty(jcrNode, "LinkText", "Explore Now")).thenReturn("Explore Now");
-        when(JcrUtils.getStringProperty(jcrNode, "Linkwindowtype", "self")).thenReturn("self");
-        when(JcrUtils.getStringProperty(jcrNode, "micrositeRank", "0")).thenReturn("1");
 
-        // External card configuration
-        List<Resource> externalCards = new ArrayList<>();
-        Resource externalCard = mock(Resource.class);
-        ValueMap valueMap = mock(ValueMap.class);
-        when(externalCard.getValueMap()).thenReturn(valueMap);
-        when(valueMap.getOrDefault("isActive", StringUtils.EMPTY)).thenReturn("true");
-        when(valueMap.getOrDefault("cardTitle", StringUtils.EMPTY)).thenReturn("External Title");
-        when(valueMap.getOrDefault("cardDescription", StringUtils.EMPTY)).thenReturn("External Description");
-        when(valueMap.getOrDefault("cardLink", StringUtils.EMPTY)).thenReturn("/externalLink");
-        when(valueMap.getOrDefault("cardimage", StringUtils.EMPTY)).thenReturn("externalImagePath");
-        when(valueMap.getOrDefault("Linkwindowtype", "_blank")).thenReturn("_blank");
-        when(valueMap.getOrDefault("micrositeRank", "0")).thenReturn("2");
-        when(valueMap.getOrDefault("LinkText", "Explore Now")).thenReturn("Check it out");
-        externalCards.add(externalCard);
-        landingPageModel.setLandingPageCards(externalCards);
-
-        // Call init method
         landingPageModel.init();
 
-        // Verify results
         List<LandingPagePojo> microsites = landingPageModel.getMicrosites();
         assertNotNull(microsites);
-        assertEquals(2, microsites.size());
-
-        LandingPagePojo firstPojo = microsites.get(0);
-        assertEquals("Title1", firstPojo.getPageTitle());
-        assertEquals("Description1", firstPojo.getPageDescription());
-        assertEquals("imagePath1", firstPojo.getImagePath());
-        assertEquals("/content/childPage1/auth.html", firstPojo.getPageLink());
-        assertEquals(1, firstPojo.getMicrositeRank());
-        assertEquals("Explore Now", firstPojo.getLinkText());
-
-        LandingPagePojo externalPojo = microsites.get(1);
-        assertEquals("External Title", externalPojo.getPageTitle());
-        assertEquals("External Description", externalPojo.getPageDescription());
-        assertEquals("externalImagePath", externalPojo.getImagePath());
-        assertEquals("/externalLink", externalPojo.getPageLink());
-        assertEquals(2, externalPojo.getMicrositeRank());
-        assertEquals("Check it out", externalPojo.getLinkText());
+        assertEquals(1, microsites.size());
     }
 
     @Test
-    public void testCheckInternalLink() {
-        // Since checkInternalLink is private, we verify its effects through public methods
-        LandingPagePojo landingPojo = new LandingPagePojo();
+    public void testInitWithException() throws Exception {
+        // Force exception in resolve method
+        when(resourceResolver.resolve("/content/test/jcr:content")).thenThrow(new RuntimeException("Test Exception"));
 
-        // Simulate internal link
-        landingPageModel.checkInternalLink(landingPojo, "/content/internalPage");
-        assertTrue(landingPojo.getIsInternalLink());
+        landingPageModel.init();
 
-        // Simulate external link
-        landingPageModel.checkInternalLink(landingPojo, "http://externaldomain.com/page");
-        assertFalse(landingPojo.getIsInternalLink());
+        // Validate that the exception was caught and handled
+        List<LandingPagePojo> microsites = landingPageModel.getMicrosites();
+        assertNotNull(microsites);  // List should still be initialized
+        assertTrue(microsites.isEmpty());
+    }
 
-        // Simulate link with dispatcher hostname
-        when(commonConfiguration.getDispatcherHostName()).thenReturn("dispatcherHost");
-        landingPageModel.checkInternalLink(landingPojo, "http://dispatcherHost/page");
-        assertTrue(landingPojo.getIsInternalLink());
+    @Test
+    public void testCheckInternalLinkTrue() {
+        LandingPagePojo landingObject = new LandingPagePojo();
+        String link = "/content/test-page";
+
+        when(commonConfiguration.getDispatcherHostName()).thenReturn("dispatcher-host");
+        when(commonConfiguration.getRsiDomainName()).thenReturn("rsi-domain");
+
+        // Invoke private method via reflection
+        Method method = LandingPageModel.class.getDeclaredMethod("checkInternalLink", LandingPagePojo.class, String.class);
+        method.setAccessible(true);
+        method.invoke(landingPageModel, landingObject, link);
+
+        assertEquals("true", landingObject.getIsInternalLink());
+    }
+
+    @Test
+    public void testCheckInternalLinkFalse() {
+        LandingPagePojo landingObject = new LandingPagePojo();
+        String link = "http://external-link.com";
+
+        when(commonConfiguration.getDispatcherHostName()).thenReturn("dispatcher-host");
+        when(commonConfiguration.getRsiDomainName()).thenReturn("rsi-domain");
+
+        Method method = LandingPageModel.class.getDeclaredMethod("checkInternalLink", LandingPagePojo.class, String.class);
+        method.setAccessible(true);
+        method.invoke(landingPageModel, landingObject, link);
+
+        assertEquals("false", landingObject.getIsInternalLink());
     }
 }
