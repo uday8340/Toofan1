@@ -68,18 +68,28 @@ public class LandingPageModelTest {
         // Setup mocks
         String path = "/content/page/jcr:content";
         when(currentPage.getPath()).thenReturn(path);
+
+        // Mock the resource and ValueMap
         Resource rsiMainRes = mock(Resource.class);
+        ValueMap rsiValueMap = mock(ValueMap.class);
+        when(rsiMainRes.getValueMap()).thenReturn(rsiValueMap);
+        when(rsiValueMap.get(Constants.CQ_TEMPLATE)).thenReturn(Constants.MICROSITE_LANDING_TEMPLATE);
+
         when(resourceResolver.resolve(path)).thenReturn(rsiMainRes);
-        when(rsiMainRes.getValueMap().get(Constants.CQ_TEMPLATE)).thenReturn(Constants.MICROSITE_LANDING_TEMPLATE);
+
+        // Mock iterator
         Iterator<Resource> iterator = mock(Iterator.class);
         when(rsiMainRes.listChildren()).thenReturn(iterator);
         when(iterator.hasNext()).thenReturn(true, true, false);
         when(iterator.next()).thenReturn(childResource);
 
-        when(childResource.getValueMap().get("jcr:primaryType")).thenReturn("cq:Page");
+        // Mock child resource
+        when(childResource.getValueMap()).thenReturn(valueMap);
+        when(valueMap.get("jcr:primaryType")).thenReturn("cq:Page");
         when(resourceResolver.resolve(childResource.getPath() + "/jcr:content")).thenReturn(resource);
         when(resource.adaptTo(Node.class)).thenReturn(node);
 
+        // Mock Node properties
         when(JcrUtils.getStringProperty(node, "sling:resourceType", "")).thenReturn(Constants.MICROSITE_RESOURCE_TYPE);
         when(JcrUtils.getStringProperty(node, "isActive", "false")).thenReturn("true");
         when(JcrUtils.getStringProperty(node, "jcr:title", "")).thenReturn("Title");
@@ -113,6 +123,8 @@ public class LandingPageModelTest {
 
         // Verify interactions
         verify(resourceResolver, times(1)).resolve(path);
+        verify(rsiMainRes, times(1)).getValueMap();
+        verify(rsiValueMap, times(1)).get(Constants.CQ_TEMPLATE);
         verify(rsiMainRes, times(1)).listChildren();
         verify(iterator, times(2)).hasNext();
         verify(iterator, times(2)).next();
