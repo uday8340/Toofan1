@@ -140,40 +140,39 @@ var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         $.validator.register({
             selector: "[data-validation='emailValidation']",
             validate: function(value) {
-                // Convert the input to a string and trim spaces around it
-                value = String(value || '').trim();
-
-                // Log the entered email value for debugging
-                console.log("Entered email: ", value);
-
-                // Basic email structure check (presence of @ and valid domain)
-                var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-                // Allow only valid characters (alphanumeric, @, dot, hyphen, and underscore)
-                var invalidCharsPattern = /[^a-zA-Z0-9@._-]/;
-
-                // Check for invalid characters
-                if (invalidCharsPattern.test(value)) {
-                    console.log("Invalid characters detected in email.");
-                    return "Email contains spaces or invalid special characters.";
+                // Ensure the value is a string and not an object
+                if (typeof value !== "string") {
+                    console.log("Value is not a string. Converting to string.");
+                    value = String(value);
                 }
 
-                // Check if email follows the correct basic syntax (e.g., user@example.com)
+                // Trim any extra spaces
+                value = value.trim();
+
+                // Log the entered email value for debugging
+                console.log("Entered email:", value);
+
+                // Basic email structure check: checks for @ and a domain with a .
+                var emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+                // Check if email contains spaces or invalid characters
+                var invalidCharsPattern = /[\s!#$%^&*()+=\[\]{};':"\\|,<>\/?]/;
+
+                // If invalid characters are found, return error
+                if (invalidCharsPattern.test(value)) {
+                    console.log("Email contains spaces or invalid special characters.");
+                    return "Email should not contain spaces or invalid special characters.";
+                }
+
+                // Check if the email format is valid using the basic email structure check
                 if (!emailPattern.test(value)) {
-                    console.log("Email syntax is invalid.");
+                    console.log("Invalid email syntax.");
                     return "Invalid email syntax. Please enter a valid email.";
                 }
 
-                // Validate the domain part (after @) to ensure it has at least one dot (e.g., example.com)
-                var domainPart = value.split('@')[1];
-                if (domainPart && domainPart.indexOf('.') === -1) {
-                    console.log("Invalid domain format.");
-                    return "Invalid domain name format. Please enter a valid domain.";
-                }
-
-                // All validations passed, email is valid
+                // Email is valid if all checks are passed
                 console.log("Email is valid.");
-                return null;
+                return null;  // No error message, so the email is valid
             }
         });
     });
