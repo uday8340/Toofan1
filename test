@@ -130,6 +130,8 @@ var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 
 .....................
+
+
 (function($, $document) {
     "use strict";
 
@@ -138,8 +140,8 @@ var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         $.validator.register({
             selector: "[data-validation='emailValidation']",
             validate: function(value) {
-                // Trim the value to remove leading/trailing spaces
-                value = value.trim();
+                // Ensure that the value is a string before trimming
+                value = String(value || '').trim();
 
                 // Log the entered email value for debugging
                 console.log("Entered email after trimming: ", value);
@@ -147,7 +149,7 @@ var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 // Basic email structure check (presence of @ and valid domain)
                 var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-                // Check for special characters or spaces other than allowed
+                // Allow only valid characters (alphanumeric, @, dot, hyphen, and underscore)
                 var invalidCharsPattern = /[^a-zA-Z0-9@._-]/;
 
                 // Check for invalid characters first
@@ -157,10 +159,7 @@ var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 }
 
                 // Validate the basic email structure
-                var isEmailValid = emailPattern.test(value);
-                console.log("Is email valid by pattern: ", isEmailValid);
-                
-                if (!isEmailValid) {
+                if (!emailPattern.test(value)) {
                     console.log("Email pattern doesn't match.");
                     return "Invalid email syntax. Please enter a valid email.";
                 }
@@ -180,4 +179,5 @@ var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     });
 
 })(jQuery, jQuery(document));
+
 
