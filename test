@@ -75,4 +75,6 @@
 
 <input type="text" data-validation="emailValidation" />
 
+var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 
