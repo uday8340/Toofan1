@@ -1,0 +1,103 @@
+(function ($, window, document) {
+    "use strict";
+
+    // Register the custom validator using the registry
+    var registry = $(window).adaptTo("foundation-registry");
+
+    registry.register("foundation.validation.validator", {
+        selector: "[data-validation='phoneValidation']", // Target elements with this data attribute
+        validate: function (el) {
+            var $el = $(el);
+            var value = $el.val(); // Get the value of the field
+
+            // Basic phone number pattern check (allowing only numbers, +, -)
+            var phonePattern = /^[0-9+ -]+$/;
+
+            // Max 15 characters check
+            var maxLength = 15;
+
+            // Empty field check
+            if (!value || value.trim() === "") {
+                return "Phone number is required.";
+            }
+
+            // Check for invalid characters (allow only digits, +, and -)
+            if (!phonePattern.test(value)) {
+                return "Phone number should only contain numbers, +, and -.";
+            }
+
+            // Check if the length exceeds 15 characters
+            if (value.length > maxLength) {
+                return "Phone number should not exceed 15 characters.";
+            }
+
+            return null; // Return null if validation is successful (valid phone number)
+        }
+    });
+
+    // Optional: Apply validation on content load
+    $(document).on("foundation-contentloaded", function (e) {
+        $(e.target).find("form").each(function () {
+            Coral.commons.ready($(this), function () {
+                $(this).adaptTo("foundation-validation").checkValidity();
+            });
+        });
+    });
+
+})(jQuery, window, document);
+
+.....................
+
+
+(function ($, window, document) {
+    "use strict";
+
+    // Register the custom validator using the registry
+    var registry = $(window).adaptTo("foundation-registry");
+
+    registry.register("foundation.validation.validator", {
+        selector: "[data-validation='emailValidation']", // Target elements with this data attribute
+        validate: function (el) {
+            var value = el.val(); // Get the value of the field
+
+            // Basic email pattern check (contains @ and valid domain)
+            var emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+            // Check for spaces and invalid characters
+            var invalidCharsPattern = /[\s!#$%^&*()+=\[\]{};':"\\|,<>\/?]/;
+
+            // Check if the email value is valid
+            if (!value || value.trim() === "") {
+                return "Email is required."; // If empty, return this error message
+            }
+
+            // Invalid characters or spaces validation
+            if (invalidCharsPattern.test(value)) {
+                return "Email should not contain spaces or invalid special characters.";
+            }
+
+            // Basic syntax validation
+            if (!emailPattern.test(value)) {
+                return "Invalid email syntax. Please enter a valid email.";
+            }
+
+            // Extract the domain part after @ and check for valid domain format
+            var domainPart = value.split("@")[1];
+            if (domainPart && domainPart.split(".").length < 2) {
+                return "Invalid domain name format.";
+            }
+
+            return null; // Return null if validation is successful (valid email)
+        }
+    });
+
+    // Optional: Apply validation on content load
+    $(document).on("foundation-contentloaded", function (e) {
+        $(e.target).find("form").each(function () {
+            Coral.commons.ready($(this), function () {
+                $(this).adaptTo("foundation-validation").checkValidity();
+            });
+        });
+    });
+
+})(jQuery, window, document);
