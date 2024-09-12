@@ -32,3 +32,44 @@
     });
 
 })(jQuery, jQuery(document));
+
+
+........................
+
+(function($, $document) {
+    "use strict";
+
+    $document.on("foundation-contentloaded", function(e) {
+        // Custom Email Validation
+        $.validator.register({
+            selector: "[data-validation='emailValidation']",
+            validate: function(value) {
+                // Basic email structure check (presence of @ and a valid domain)
+                var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+                // Check for special characters or spaces other than allowed
+                var invalidCharsPattern = /[^a-zA-Z0-9@._-]/;
+
+                // Validate the basic email structure
+                if (!emailPattern.test(value)) {
+                    return "Invalid email syntax. Please enter a valid email.";
+                }
+
+                // Check for invalid characters or spaces
+                if (invalidCharsPattern.test(value)) {
+                    return "Email should not contain spaces or invalid special characters.";
+                }
+
+                // Validate the domain part (after @)
+                var domainPart = value.split('@')[1];
+                if (domainPart && domainPart.split('.').length < 2) {
+                    return "Invalid domain name format. Please enter a valid domain.";
+                }
+
+                return null; // Email is valid
+            }
+        });
+    });
+
+})(jQuery, jQuery(document));
+
