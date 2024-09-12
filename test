@@ -76,5 +76,57 @@
 <input type="text" data-validation="emailValidation" />
 
 var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+............................
+
+(function($, $document) {
+    "use strict";
+
+    $document.on("foundation-contentloaded", function(e) {
+        // Custom Email Validation
+        $.validator.register({
+            selector: "[data-validation='emailValidation']",
+            validate: function(value) {
+                // Log the entered email value for debugging
+                console.log("Entered email: ", value);
+
+                // Check if value is empty
+                if (!value) {
+                    return "Email cannot be empty.";
+                }
+
+                // Basic email structure check (presence of @ and valid domain)
+                var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+                // Check for special characters or spaces other than allowed
+                var invalidCharsPattern = /[^a-zA-Z0-9@._-]/;
+
+                // Check for invalid characters first
+                if (invalidCharsPattern.test(value)) {
+                    console.log("Invalid characters detected in email.");
+                    return "Email should not contain spaces or invalid special characters.";
+                }
+
+                // Validate the basic email structure
+                if (!emailPattern.test(value)) {
+                    console.log("Email pattern doesn't match.");
+                    return "Invalid email syntax. Please enter a valid email.";
+                }
+
+                // Validate the domain part (after @)
+                var domainPart = value.split('@')[1];
+                if (domainPart && domainPart.split('.').length < 2) {
+                    console.log("Invalid domain name format.");
+                    return "Invalid domain name format. Please enter a valid domain.";
+                }
+
+                // Email is valid
+                console.log("Email is valid.");
+                return null;
+            }
+        });
+    });
+
+})(jQuery, jQuery(document));
+
 
 
