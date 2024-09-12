@@ -140,11 +140,11 @@ var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         $.validator.register({
             selector: "[data-validation='emailValidation']",
             validate: function(value) {
-                // Ensure that the value is a string before trimming
+                // Convert the input to a string and trim spaces around it
                 value = String(value || '').trim();
 
                 // Log the entered email value for debugging
-                console.log("Entered email after trimming: ", value);
+                console.log("Entered email: ", value);
 
                 // Basic email structure check (presence of @ and valid domain)
                 var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -152,31 +152,34 @@ var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 // Allow only valid characters (alphanumeric, @, dot, hyphen, and underscore)
                 var invalidCharsPattern = /[^a-zA-Z0-9@._-]/;
 
-                // Check for invalid characters first
+                // Check for invalid characters
                 if (invalidCharsPattern.test(value)) {
                     console.log("Invalid characters detected in email.");
-                    return "Email should not contain spaces or invalid special characters.";
+                    return "Email contains spaces or invalid special characters.";
                 }
 
-                // Validate the basic email structure
+                // Check if email follows the correct basic syntax (e.g., user@example.com)
                 if (!emailPattern.test(value)) {
-                    console.log("Email pattern doesn't match.");
+                    console.log("Email syntax is invalid.");
                     return "Invalid email syntax. Please enter a valid email.";
                 }
 
-                // Validate the domain part (after @)
+                // Validate the domain part (after @) to ensure it has at least one dot (e.g., example.com)
                 var domainPart = value.split('@')[1];
-                if (domainPart && domainPart.split('.').length < 2) {
-                    console.log("Invalid domain name format.");
+                if (domainPart && domainPart.indexOf('.') === -1) {
+                    console.log("Invalid domain format.");
                     return "Invalid domain name format. Please enter a valid domain.";
                 }
 
-                // Email is valid
+                // All validations passed, email is valid
                 console.log("Email is valid.");
                 return null;
             }
         });
     });
+
+})(jQuery, jQuery(document));
+
 
 })(jQuery, jQuery(document));
 
