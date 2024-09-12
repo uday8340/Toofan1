@@ -73,3 +73,6 @@
 
 })(jQuery, jQuery(document));
 
+<input type="text" data-validation="emailValidation" />
+
+
