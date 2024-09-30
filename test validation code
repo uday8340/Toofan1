@@ -105,3 +105,18 @@
 
 
 mvn clean Install -PautoInstallPackage -padobe-public
+
+<div class="header-image-component">
+    <sly data-sly-test="${headerImage}">
+        <sly data-sly-test="${headerImage == 'green'}">
+            <img src="/content/dam/myproject/green.jpg" alt="Green Image" class="header-image"/>
+        </sly>
+        <sly data-sly-test="${headerImage == 'purple'}">
+            <img src="/content/dam/myproject/purple.jpg" alt="Purple Image" class="header-image"/>
+        </sly>
+        <sly data-sly-test="${headerImage == 'yellow'}">
+            <img src="/content/dam/myproject/yellow.jpg" alt="Yellow Image" class="header-image"/>
+        </sly>
+    </sly>
+</div>
+
