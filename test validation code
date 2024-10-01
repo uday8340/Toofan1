@@ -120,3 +120,7 @@ mvn clean Install -PautoInstallPackage -padobe-public
     </sly>
 </div>
 
+<sly data-sly-use.headerImageModel="com.myproject.core.models.HeaderImageModel">
+    <img src="${headerImageModel.selectedImage @ context='uri'}" alt="Header Image" />
+</sly>
+
