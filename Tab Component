@@ -120,4 +120,84 @@ public class TabContainerModel {
 </div>
 
 ......................
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root
+    xmlns:sling="http://sling.apache.org/jcr/sling/1.0"
+    xmlns:jcr="http://www.jcp.org/jcr/1.0"
+    jcr:primaryType="nt:unstructured"
+    sling:resourceType="cq/gui/components/authoring/dialog"
+    jcr:title="Tab Column Container Component">
+
+    <content jcr:primaryType="nt:unstructured"
+             sling:resourceType="granite/ui/components/coral/foundation/container">
+        <layout jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/layout/fixedcolumns"/>
+        <items jcr:primaryType="nt:unstructured">
+            
+            <!-- Tabs Multifield -->
+            <tabsField
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/form/multifield"
+                fieldLabel="Tabs"
+                name="./tabs">
+
+                <!-- Nested Fields inside Multifield -->
+                <field jcr:primaryType="nt:unstructured">
+                    <tabFieldSet jcr:primaryType="nt:unstructured"
+                                 sling:resourceType="granite/ui/components/coral/foundation/form/fieldset"
+                                 fieldLabel="Tab Details">
+
+                        <!-- Tab Name -->
+                        <tabName jcr:primaryType="nt:unstructured"
+                                 sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
+                                 fieldLabel="Tab Name"
+                                 name="./tabName"/>
+
+                        <!-- Tab Content Items -->
+                        <tabItems jcr:primaryType="nt:unstructured"
+                                  sling:resourceType="granite/ui/components/coral/foundation/form/multifield"
+                                  fieldLabel="Items"
+                                  name="./tabItems">
+
+                            <field jcr:primaryType="nt:unstructured">
+                                <!-- Item Image -->
+                                <itemImage jcr:primaryType="nt:unstructured"
+                                           sling:resourceType="cq/gui/components/authoring/dialog/fileupload"
+                                           fieldLabel="Item Image"
+                                           name="./itemImage"
+                                           allowUpload="true"
+                                           autoStart="true"
+                                           useHTML5="true"
+                                           multiple="false"
+                                           sizeLimit="{Long}20971520"
+                                           mimeTypes="[image/png,image/jpeg]"/>
+                                
+                                <!-- Item Title -->
+                                <itemTitle jcr:primaryType="nt:unstructured"
+                                           sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
+                                           fieldLabel="Item Title"
+                                           name="./itemTitle"/>
+
+                                <!-- Item Description -->
+                                <itemDescription jcr:primaryType="nt:unstructured"
+                                                 sling:resourceType="granite/ui/components/coral/foundation/form/textarea"
+                                                 fieldLabel="Item Description"
+                                                 name="./itemDescription"/>
+
+                                <!-- Item Link -->
+                                <itemLink jcr:primaryType="nt:unstructured"
+                                          sling:resourceType="granite/ui/components/coral/foundation/form/pathfield"
+                                          fieldLabel="Item Link"
+                                          name="./itemLink"/>
+                            </field>
+                        </tabItems>
+
+                    </tabFieldSet>
+                </field>
+            </tabsField>
+
+        </items>
+    </content>
+</jcr:root>
+
 
