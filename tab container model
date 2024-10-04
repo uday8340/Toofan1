@@ -5,12 +5,17 @@ import org.apache.sling.models.annotations.DefaultInjectionStrategy;
 import org.apache.sling.models.annotations.Model;
 import org.apache.sling.models.annotations.injectorspecific.ChildResource;
 import org.apache.sling.models.annotations.injectorspecific.ValueMapValue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Model(adaptables = Resource.class, defaultInjectionStrategy = DefaultInjectionStrategy.OPTIONAL)
 public class TabColumnContainer {
+
+    private static final Logger LOG = LoggerFactory.getLogger(TabColumnContainer.class);
 
     @ValueMapValue
     private String title;
@@ -20,7 +25,24 @@ public class TabColumnContainer {
 
     @PostConstruct
     protected void init() {
-        // Initialization logic if needed
+        // Log the initialization process
+        LOG.info("Initializing TabColumnContainer");
+
+        // Set a default title if none is provided
+        if (title == null || title.isEmpty()) {
+            title = "Default Tab Column Container Title";
+            LOG.info("Title was not provided, setting default title: {}", title);
+        }
+
+        // Filter out any null tabs
+        if (tabs != null) {
+            tabs = tabs.stream()
+                       .filter(tab -> tab != null && tab.getTitle() != null && !tab.getTitle().isEmpty())
+                       .collect(Collectors.toList());
+            LOG.info("Filtered tabs, remaining count: {}", tabs.size());
+        } else {
+            LOG.warn("Tabs resource is null");
+        }
     }
 
     public String getTitle() {
