@@ -200,4 +200,32 @@ public class TabContainerModel {
     </content>
 </jcr:root>
 
+...............................
+
+<sly data-sly-use.model="com.<your-project>.core.models.TabContainerModel">
+    <div class="tab-container">
+        <ul class="tab-titles">
+            <sly data-sly-list.tab="${model.getTabs()}">
+                <li><a href="#tab-${tab.tabTitle}">${tab.tabTitle}</a></li>
+            </sly>
+        </ul>
+        <div class="tab-content">
+            <sly data-sly-list.tabContent="${model.getTabs()}">
+                <div id="tab-${tabContent.tabTitle}" class="tab-pane">
+                    <sly data-sly-list.item="${tabContent.getItems()}">
+                        <div class="item">
+                            <img src="${item.imagePath}" alt="${item.itemTitle}" />
+                            <h3>${item.itemTitle}</h3>
+                            <p>${item.itemDescription}</p>
+                        </div>
+                    </sly>
+                    
+                    <!-- Include an existing component -->
+                    <sly data-sly-resource="${'heroComponentPath'}"
+                         data-sly-unwrap />
+                </div>
+            </sly>
+        </div>
+    </div>
+</sly>
 
