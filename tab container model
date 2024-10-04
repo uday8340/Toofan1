@@ -1,40 +1,57 @@
-package com.yourproject.core.models;
+// Initialization logic if needed
+package com.example.models;
 
 import org.apache.sling.api.resource.Resource;
-import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.models.annotations.DefaultInjectionStrategy;
 import org.apache.sling.models.annotations.Model;
 import org.apache.sling.models.annotations.injectorspecific.ChildResource;
 import org.apache.sling.models.annotations.injectorspecific.ValueMapValue;
 
+import javax.annotation.PostConstruct;
 import java.util.List;
 
-@Model(
-    adaptables = {Resource.class, SlingHttpServletRequest.class},
-    defaultInjectionStrategy = DefaultInjectionStrategy.OPTIONAL
-)
-public class TabColumnContainerModel {
+@Model(adaptables = Resource.class, defaultInjectionStrategy = DefaultInjectionStrategy.OPTIONAL)
+public class TabColumnContainer {
 
-    // Represents the title for the first tab
     @ValueMapValue
     private String title;
 
-    // Represents the list of reports in the tab
     @ChildResource
-    private List<TabDetails> tabDetails;
+    private List<Tab> tabs;
 
-    // Getter for the title field
+    @PostConstruct
+    protected void init() {
+        // Initialization logic if needed
+    }
+
     public String getTitle() {
         return title;
     }
 
-    // Getter for the tab details (List of items inside the tab)
-    public List<TabDetails> getTabDetails() {
-        return tabDetails;
+    public List<Tab> getTabs() {
+        return tabs;
     }
 
-    // Inner class representing the structure of tab details (items under the multifield)
-    public static class TabDetails {
+    @Model(adaptables = Resource.class, defaultInjectionStrategy = DefaultInjectionStrategy.OPTIONAL)
+    public static class Tab {
+
+        @ValueMapValue
+        private String title;
+
+        @ChildResource
+        private List<Report> tabDetails;
+
+        public String getTitle() {
+            return title;
+        }
+
+        public List<Report> getTabDetails() {
+            return tabDetails;
+        }
+    }
+
+    @Model(adaptables = Resource.class, defaultInjectionStrategy = DefaultInjectionStrategy.OPTIONAL)
+    public static class Report {
 
         @ValueMapValue
         private String reportId;
@@ -48,22 +65,18 @@ public class TabColumnContainerModel {
         @ValueMapValue
         private boolean isTheLinkExternal;
 
-        // Getter for report ID
         public String getReportId() {
             return reportId;
         }
 
-        // Getter for the link title
         public String getLinkTitle() {
             return linkTitle;
         }
 
-        // Getter for the link URL
         public String getLinkUrl() {
             return linkUrl;
         }
 
-        // Getter for the external link checkbox
         public boolean isTheLinkExternal() {
             return isTheLinkExternal;
         }
