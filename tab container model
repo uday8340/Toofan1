@@ -1,0 +1,71 @@
+package com.yourproject.core.models;
+
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.SlingHttpServletRequest;
+import org.apache.sling.models.annotations.DefaultInjectionStrategy;
+import org.apache.sling.models.annotations.Model;
+import org.apache.sling.models.annotations.injectorspecific.ChildResource;
+import org.apache.sling.models.annotations.injectorspecific.ValueMapValue;
+
+import java.util.List;
+
+@Model(
+    adaptables = {Resource.class, SlingHttpServletRequest.class},
+    defaultInjectionStrategy = DefaultInjectionStrategy.OPTIONAL
+)
+public class TabColumnContainerModel {
+
+    // Represents the title for the first tab
+    @ValueMapValue
+    private String title;
+
+    // Represents the list of reports in the tab
+    @ChildResource
+    private List<TabDetails> tabDetails;
+
+    // Getter for the title field
+    public String getTitle() {
+        return title;
+    }
+
+    // Getter for the tab details (List of items inside the tab)
+    public List<TabDetails> getTabDetails() {
+        return tabDetails;
+    }
+
+    // Inner class representing the structure of tab details (items under the multifield)
+    public static class TabDetails {
+
+        @ValueMapValue
+        private String reportId;
+
+        @ValueMapValue
+        private String linkTitle;
+
+        @ValueMapValue
+        private String linkUrl;
+
+        @ValueMapValue
+        private boolean isTheLinkExternal;
+
+        // Getter for report ID
+        public String getReportId() {
+            return reportId;
+        }
+
+        // Getter for the link title
+        public String getLinkTitle() {
+            return linkTitle;
+        }
+
+        // Getter for the link URL
+        public String getLinkUrl() {
+            return linkUrl;
+        }
+
+        // Getter for the external link checkbox
+        public boolean isTheLinkExternal() {
+            return isTheLinkExternal;
+        }
+    }
+}
