@@ -103,3 +103,31 @@ public class TabColumnContainer {
         }
     }
 }
+.....................
+
+<div class="column-container">
+    <div class="tabs">
+        <nav>
+            <ul>
+                <li><a href="#tab1">Tab 1</a></li>
+                <li><a href="#tab2">Tab 2</a></li>
+                <li><a href="#tab3">Tab 3</a></li>
+            </ul>
+        </nav>
+
+        <!-- Tab 1 Content -->
+        <div id="tab1" class="tab-content">
+            <sly data-sly-resource="${'column1'}" />
+        </div>
+
+        <!-- Tab 2 Content -->
+        <div id="tab2" class="tab-content">
+            <sly data-sly-resource="${'column2'}" />
+        </div>
+
+        <!-- Tab 3 Content -->
+        <div id="tab3" class="tab-content">
+            <sly data-sly-resource="${'column3'}" />
+        </div>
+    </div>
+</div>
