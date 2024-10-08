@@ -1,190 +1,66 @@
-package com.example.models;
-
-import org.apache.sling.api.resource.Resource;
-import org.apache.sling.models.annotations.DefaultInjectionStrategy;
-import org.apache.sling.models.annotations.Model;
-import org.apache.sling.models.annotations.injectorspecific.ChildResource;
-import org.apache.sling.models.annotations.injectorspecific.ValueMapValue;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.PostConstruct;
-import java.util.List;
-import java.util.stream.Collectors;
-
-@Model(adaptables = Resource.class, defaultInjectionStrategy = DefaultInjectionStrategy.OPTIONAL)
-public class TabColumnContainer {
-
-    private static final Logger LOG = LoggerFactory.getLogger(TabColumnContainer.class);
-
-    @ValueMapValue
-    private String title;
-
-    @ChildResource
-    private List<Tab> tabs;
-
-    @PostConstruct
-    protected void init() {
-        // Log the initialization process
-        LOG.info("Initializing TabColumnContainer");
-
-        // Set a default title if none is provided
-        if (title == null || title.isEmpty()) {
-            title = "Default Tab Column Container Title";
-            LOG.info("Title was not provided, setting default title: {}", title);
-        }
-
-        // Filter out any null tabs
-        if (tabs != null) {
-            tabs = tabs.stream()
-                       .filter(tab -> tab != null && tab.getTitle() != null && !tab.getTitle().isEmpty())
-                       .collect(Collectors.toList());
-            LOG.info("Filtered tabs, remaining count: {}", tabs.size());
-        } else {
-            LOG.warn("Tabs resource is null");
-        }
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public List<Tab> getTabs() {
-        return tabs;
-    }
-
-    @Model(adaptables = Resource.class, defaultInjectionStrategy = DefaultInjectionStrategy.OPTIONAL)
-    public static class Tab {
-
-        @ValueMapValue
-        private String title;
-
-        @ChildResource
-        private List<Report> tabDetails;
-
-        public String getTitle() {
-            return title;
-        }
-
-        public List<Report> getTabDetails() {
-            return tabDetails;
-        }
-    }
-
-    @Model(adaptables = Resource.class, defaultInjectionStrategy = DefaultInjectionStrategy.OPTIONAL)
-    public static class Report {
-
-        @ValueMapValue
-        private String reportId;
-
-        @ValueMapValue
-        private String linkTitle;
-
-        @ValueMapValue
-        private String linkUrl;
-
-        @ValueMapValue
-        private boolean isTheLinkExternal;
-
-        public String getReportId() {
-            return reportId;
-        }
-
-        public String getLinkTitle() {
-            return linkTitle;
-        }
-
-        public String getLinkUrl() {
-            return linkUrl;
-        }
-
-        public boolean isTheLinkExternal() {
-            return isTheLinkExternal;
-        }
-    }
-}
-.....................
-
-<div class="column-container">
-    <div class="tabs">
-        <nav>
-            <ul>
-                <li><a href="#tab1">Tab 1</a></li>
-                <li><a href="#tab2">Tab 2</a></li>
-                <li><a href="#tab3">Tab 3</a></li>
-            </ul>
-        </nav>
-
-        <!-- Tab 1 Content -->
-        <div id="tab1" class="tab-content">
-            <sly data-sly-resource="${'column1'}" />
-        </div>
-
-        <!-- Tab 2 Content -->
-        <div id="tab2" class="tab-content">
-            <sly data-sly-resource="${'column2'}" />
-        </div>
-
-        <!-- Tab 3 Content -->
-        <div id="tab3" class="tab-content">
-            <sly data-sly-resource="${'column3'}" />
-        </div>
-    </div>
-</div>
-
-................
-
 <?xml version="1.0" encoding="UTF-8"?>
-<jcr:root xmlns:sling="http://sling.apache.org/jcr/sling/1.0"
-          xmlns:cq="http://www.day.com/jcr/cq/1.0"
-          xmlns:jcr="http://www.jcp.org/jcr/1.0"
-          jcr:primaryType="nt:unstructured"
-          jcr:title="Tab Column Container"
-          sling:resourceType="cq/gui/components/authoring/dialog">
+<jcr:root xmlns:sling="http://sling.apache.org/jcr/sling/1.0" xmlns:granite="http://www.adobe.com/jcr/granite/1.0" xmlns:cq="http://www.day.com/jcr/cq/1.0" xmlns:jcr="http://www.jcp.org/jcr/1.0" xmlns:nt="http://www.jcp.org/jcr/nt/1.0"
+    jcr:primaryType="nt:unstructured"
+    jcr:title="Autopace Tabs"
+    sling:resourceType="cq/gui/components/authoring/dialog"
+    extraClientlibs="[autopace.tabs]">
     <content
         jcr:primaryType="nt:unstructured"
-        sling:resourceType="granite/ui/components/coral/foundation/fixedcolumns">
+        sling:resourceType="granite/ui/components/coral/foundation/container">
         <items jcr:primaryType="nt:unstructured">
-            <column jcr:primaryType="nt:unstructured">
+            <tabs
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/tabs"
+                maximized="{Boolean}true">
                 <items jcr:primaryType="nt:unstructured">
-                    <tabs
+                    <tabitems
                         jcr:primaryType="nt:unstructured"
-                        sling:resourceType="granite/ui/components/coral/foundation/tabs"
-                        maximized="{Boolean}true">
+                        jcr:title="Items"
+                        sling:resourceType="granite/ui/components/coral/foundation/container"
+                        margin="{Boolean}true">
                         <items jcr:primaryType="nt:unstructured">
-                            <tab
+                            <columns
                                 jcr:primaryType="nt:unstructured"
-                                sling:resourceType="granite/ui/components/coral/foundation/form/multifield"
-                                fieldLabel="Tabs"
-                                name="./tabs"
-                                composite="{Boolean}true">
-                                <field jcr:primaryType="nt:unstructured"
-                                       sling:resourceType="granite/ui/components/coral/foundation/container">
-                                    <items jcr:primaryType="nt:unstructured">
-                                        <title
-                                            jcr:primaryType="nt:unstructured"
-                                            sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
-                                            fieldLabel="Tab Title"
-                                            name="./title"/>
-                                        <components
-                                            jcr:primaryType="nt:unstructured"
-                                            sling:resourceType="granite/ui/components/coral/foundation/form/multifield"
-                                            fieldLabel="Components"
-                                            name="./components"
-                                            composite="{Boolean}true">
-                                            <field jcr:primaryType="nt:unstructured"
-                                                   sling:resourceType="granite/ui/components/coral/foundation/form/pathfield"
-                                                   fieldLabel="Component Path"
-                                                   name="./path"/>
-                                        </components>
-                                    </items>
-                                </field>
-                            </tab>
+                                sling:resourceType="granite/ui/components/coral/foundation/fixedcolumns"
+                                margin="{Boolean}true">
+                                <items jcr:primaryType="nt:unstructured">
+                                    <column
+                                        jcr:primaryType="nt:unstructured"
+                                        sling:resourceType="granite/ui/components/coral/foundation/container">
+                                        <items jcr:primaryType="nt:unstructured">
+	                                        <tabItems
+	                                            jcr:primaryType="nt:unstructured"
+	                                            sling:resourceType="granite/ui/components/coral/foundation/form/multifield"
+	                                            composite="{Boolean}true"
+	                                            fieldDescription="Click 'Add Field' to add new item."
+	                                            fieldLabel="Tab Items">
+	                                            <field
+	                                                jcr:primaryType="nt:unstructured"
+	                                                sling:resourceType="granite/ui/components/coral/foundation/container"
+	                                                name="./tabItems">
+	                                                <items jcr:primaryType="nt:unstructured">
+	                                                    <title
+	                                                    	granite:class="tab-title"
+	                                                        jcr:primaryType="nt:unstructured"
+	                                                        sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
+	                                                        fieldLabel="Title"
+	                                                        name="./title"/>
+	                                                    <tabId
+	                                                    	granite:class="tab-id"
+	                                                        jcr:primaryType="nt:unstructured"
+	                                                        sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
+	                                                        name="./tabId"/>
+	                                                </items>
+	                                            </field>
+	                                        </tabItems>
+                                        </items>
+                                    </column>
+                                </items>
+                            </columns>
                         </items>
-                    </tabs>
+                    </tabitems>
                 </items>
-            </column>
+            </tabs>
         </items>
     </content>
 </jcr:root>
-
