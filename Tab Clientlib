@@ -83,3 +83,61 @@ function openCity(evt, cityName) {
   document.getElementById(cityName).style.display = "block";
   evt.currentTarget.className += " active";
 }
+
+
+
+
+
+...........
+
+
+
+<sly data-sly-test="${wcmmode.edit}">
+    <sly data-sly-use.templates="core/wcm/components/commons/v1/templates.html"
+         data-sly-call="${templates.placeholder @ isEmpty = !properties.layout, classAppend='cmp-text'}"></sly>
+</sly>
+
+<sly data-sly-use.tabModel="com.ms.wmrsicms.core.microsites.slingmodels.TabsColumnContainerModel">
+
+    <!-- Tab Navigation -->
+    <ul class="nav nav-tabs" role="tablist">
+        <sly data-sly-test="${tabModel.tabModelList}" data-sly-list.tabDetails="${tabModel.tabModelList}">
+            <li class="nav-item" role="presentation">
+                <a class="nav-link ${tabDetails.isTheLinkExternal ? 'external-tab' : ''} ${tabDetailsList.index == 0 ? 'active' : ''}" 
+                   id="tab-${tabDetails.tabTitle}-tab" 
+                   data-bs-toggle="tab" 
+                   href="#tab-${tabDetails.tabTitle}" 
+                   role="tab" 
+                   aria-controls="tab-${tabDetails.tabTitle}" 
+                   aria-selected="${tabDetailsList.index == 0 ? 'true' : 'false'}">
+                    ${tabDetails.tabTitle}
+                </a>
+            </li>
+        </sly>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content">
+        <sly data-sly-test="${tabModel.tabModelList}" data-sly-list.tabDetails="${tabModel.tabModelList}">
+            <div class="tab-pane fade ${tabDetailsList.index == 0 ? 'show active' : ''}" 
+                 id="tab-${tabDetails.tabTitle}" 
+                 role="tabpanel" 
+                 aria-labelledby="tab-${tabDetails.tabTitle}-tab">
+
+                <div>
+                    <img src="${tabDetails.image}" alt="${tabDetails.tabTitle} Image">
+                </div>
+                <div style="background-color: ${tabDetails.backgroundColor}">
+                    ${tabDetails.backgroundColor}
+                </div>
+                <div>
+                    <a href="${tabDetails.linkUrl}" ${tabDetails.isTheLinkExternal ? 'target="_blank"' : ''}>
+                        ${tabDetails.linkTitle}
+                    </a>
+                </div>
+                <div data-sly-resource="${'body-form @ resourceType=tabDetails.componentPlaceholder'}"></div>
+            </div>
+        </sly>
+    </div>
+
+</sly>
