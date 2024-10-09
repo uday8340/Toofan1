@@ -1,4 +1,42 @@
-<!-- Tab links -->
+<sly data-sly-use.tabModel="com.ms.wmrsicms.core.microsites.slingmodels.TabsColumnContainerModel">
+
+    <!-- Check if there are any tabs -->
+    <sly data-sly-test="${tabModel.tabModelList}" data-sly-list.tabDetails="${tabModel.tabModelList}">
+
+        <!-- Tab container -->
+        <div class="tab-container">
+            
+            <!-- Single Tab for each item in the multifield -->
+            <div class="tab-item">
+                
+                <!-- Tab Title -->
+                <div class="tab-title">${tabDetails.tabTitle}</div>
+                
+                <!-- Image -->
+                <div class="tab-image">
+                    <img src="${tabDetails.image}" alt="${tabDetails.tabTitle}">
+                </div>
+
+                <!-- Background Color -->
+                <div class="tab-background" style="background-color:${tabDetails.backgroundColor};"></div>
+
+                <!-- Link -->
+                <div class="tab-link">
+                    <a href="${tabDetails.linkUrl}" target="${tabDetails.isTheLinkExternal ? '_blank' : '_self'}">
+                        ${tabDetails.linkTitle}
+                    </a>
+                </div>
+
+                <!-- Component Placeholder Content -->
+                <div data-sly-resource="${'body-form @resourceType=' + tabDetails.componentPlaceholder}"></div>
+
+            </div> <!-- End of Tab Item -->
+
+        </div> <!-- End of Tab Container -->
+        
+    </sly>
+
+</sly><!-- Tab links -->
 <div class="tab">
   <button class="tablinks" onclick="openCity(event, 'London')">London</button>
   <button class="tablinks" onclick="openCity(event, 'Paris')">Paris</button>
@@ -141,3 +179,46 @@ function openCity(evt, cityName) {
     </div>
 
 </sly>
+
+,,.................
+
+<sly data-sly-use.tabModel="com.ms.wmrsicms.core.microsites.slingmodels.TabsColumnContainerModel">
+
+    <!-- Check if there are any tabs -->
+    <sly data-sly-test="${tabModel.tabModelList}" data-sly-list.tabDetails="${tabModel.tabModelList}">
+
+        <!-- Tab container -->
+        <div class="tab-container">
+            
+            <!-- Single Tab for each item in the multifield -->
+            <div class="tab-item">
+                
+                <!-- Tab Title -->
+                <div class="tab-title">${tabDetails.tabTitle}</div>
+                
+                <!-- Image -->
+                <div class="tab-image">
+                    <img src="${tabDetails.image}" alt="${tabDetails.tabTitle}">
+                </div>
+
+                <!-- Background Color -->
+                <div class="tab-background" style="background-color:${tabDetails.backgroundColor};"></div>
+
+                <!-- Link -->
+                <div class="tab-link">
+                    <a href="${tabDetails.linkUrl}" target="${tabDetails.isTheLinkExternal ? '_blank' : '_self'}">
+                        ${tabDetails.linkTitle}
+                    </a>
+                </div>
+
+                <!-- Component Placeholder Content -->
+                <div data-sly-resource="${'body-form @resourceType=' + tabDetails.componentPlaceholder}"></div>
+
+            </div> <!-- End of Tab Item -->
+
+        </div> <!-- End of Tab Container -->
+        
+    </sly>
+
+</sly>
+
