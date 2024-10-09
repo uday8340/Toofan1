@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+u<?xml version="1.0" encoding="UTF-8"?>
 <jcr:root
     xmlns:sling="http://sling.apache.org/jcr/sling/1.0"
     xmlns:cq="http://www.day.com/jcr/cq/1.0"
@@ -228,4 +228,21 @@ public class TabContainerModel {
         </div>
     </div>
 </sly>
+
+private String componentPlaceholder;
+
+public String getComponentPlaceholder() {
+    // Check if componentPlaceholder is empty or null
+    if (componentPlaceholder == null || componentPlaceholder.isEmpty()) {
+        // Return the default responsive grid path if componentPlaceholder is empty
+        return "/content/default/responsive/grid/path";
+    } else {
+        return componentPlaceholder;
+    }
+}
+
+public void setComponentPlaceholder(String componentPlaceholder) {
+    this.componentPlaceholder = componentPlaceholder;
+}
+
 
