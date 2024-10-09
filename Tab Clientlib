@@ -1,224 +1,78 @@
 <sly data-sly-use.tabModel="com.ms.wmrsicms.core.microsites.slingmodels.TabsColumnContainerModel">
 
-    <!-- Check if there are any tabs -->
-    <sly data-sly-test="${tabModel.tabModelList}" data-sly-list.tabDetails="${tabModel.tabModelList}">
+    <!-- Tabs Navigation -->
+    <div class="cmp-tabs">
+        <ul role="tablist" class="cmp-tabs__tablist">
+            <sly data-sly-list.tabDetails="${tabModel.tabModelList}">
+                <!-- Display Tab Titles, reversed so the latest appears first -->
+                <li class="cmp-tabs__tab" role="tab">
+                    <a href="#tab-${tabDetails.tabTitle}" role="tab">
+                        ${tabDetails.tabTitle}
+                    </a>
+                </li>
+            </sly>
+        </ul>
+    </div>
 
-        <!-- Tab container -->
-        <div class="tab-container">
-            
-            <!-- Single Tab for each item in the multifield -->
-            <div class="tab-item">
-                
-                <!-- Tab Title -->
-                <div class="tab-title">${tabDetails.tabTitle}</div>
-                
-                <!-- Image -->
-                <div class="tab-image">
-                    <img src="${tabDetails.image}" alt="${tabDetails.tabTitle}">
-                </div>
-
+    <!-- Tab Content Section -->
+    <div class="cmp-tabs__content">
+        <sly data-sly-list.tabDetails="${tabModel.tabModelList}">
+            <!-- Content for each tab -->
+            <section id="tab-${tabDetails.tabTitle}" class="cmp-tabs__tabpanel" role="tabpanel">
                 <!-- Background Color -->
-                <div class="tab-background" style="background-color:${tabDetails.backgroundColor};"></div>
-
-                <!-- Link -->
-                <div class="tab-link">
-                    <a href="${tabDetails.linkUrl}" target="${tabDetails.isTheLinkExternal ? '_blank' : '_self'}">
-                        ${tabDetails.linkTitle}
-                    </a>
+                <div class="background-color" style="background-color:${tabDetails.backgroundColor}">
+                    <!-- Image, Link, and External Link Info -->
+                    <div>${tabDetails.image}</div>
+                    <div>
+                        <a href="${tabDetails.linkUrl}" target="${tabDetails.isTheLinkExternal ? '_blank' : '_self'}">
+                            ${tabDetails.linkTitle}
+                        </a>
+                    </div>
+                    <!-- Whether the link is external -->
+                    <div>${tabDetails.isTheLinkExternal ? 'External Link' : 'Internal Link'}</div>
                 </div>
-
-                <!-- Component Placeholder Content -->
-                <div data-sly-resource="${'body-form @resourceType=' + tabDetails.componentPlaceholder}"></div>
-
-            </div> <!-- End of Tab Item -->
-
-        </div> <!-- End of Tab Container -->
-        
-    </sly>
-
-</sly><!-- Tab links -->
-<div class="tab">
-  <button class="tablinks" onclick="openCity(event, 'London')">London</button>
-  <button class="tablinks" onclick="openCity(event, 'Paris')">Paris</button>
-  <button class="tablinks" onclick="openCity(event, 'Tokyo')">Tokyo</button>
-</div>
-
-<!-- Tab content -->
-<div id="London" class="tabcontent">
-  <h3>London</h3>
-  <p>London is the capital city of England.</p>
-</div>
-
-<div id="Paris" class="tabcontent">
-  <h3>Paris</h3>
-  <p>Paris is the capital of France.</p>
-</div>
-
-<div id="Tokyo" class="tabcontent">
-  <h3>Tokyo</h3>
-  <p>Tokyo is the capital of Japan.</p>
-</div>
-Create buttons to open specific tab content. All <div> elements with class="tabcontent" are hidden by default (with CSS & JS). When the user clicks on a button - it will open the tab content that "matches" this button.
-
-Step 2) Add CSS:
-Style the buttons and the tab content:
-
-Example
-/* Style the tab */
-.tab {
-  overflow: hidden;
-  border: 1px solid #ccc;
-  background-color: #f1f1f1;
-}
-
-/* Style the buttons that are used to open the tab content */
-.tab button {
-  background-color: inherit;
-  float: left;
-  border: none;
-  outline: none;
-  cursor: pointer;
-  padding: 14px 16px;
-  transition: 0.3s;
-}
-
-/* Change background color of buttons on hover */
-.tab button:hover {
-  background-color: #ddd;
-}
-
-/* Create an active/current tablink class */
-.tab button.active {
-  background-color: #ccc;
-}
-
-/* Style the tab content */
-.tabcontent {
-  display: none;
-  padding: 6px 12px;
-  border: 1px solid #ccc;
-  border-top: none;
-}
-Step 3) Add JavaScript:
-Example
-function openCity(evt, cityName) {
-  // Declare all variables
-  var i, tabcontent, tablinks;
-
-  // Get all elements with class="tabcontent" and hide them
-  tabcontent = document.getElementsByClassName("tabcontent");
-  for (i = 0; i < tabcontent.length; i++) {
-    tabcontent[i].style.display = "none";
-  }
-
-  // Get all elements with class="tablinks" and remove the class "active"
-  tablinks = document.getElementsByClassName("tablinks");
-  for (i = 0; i < tablinks.length; i++) {
-    tablinks[i].className = tablinks[i].className.replace(" active", "");
-  }
-
-  // Show the current tab, and add an "active" class to the button that opened the tab
-  document.getElementById(cityName).style.display = "block";
-  evt.currentTarget.className += " active";
-}
-
-
-
-
-
-...........
-
-
-
-<sly data-sly-test="${wcmmode.edit}">
-    <sly data-sly-use.templates="core/wcm/components/commons/v1/templates.html"
-         data-sly-call="${templates.placeholder @ isEmpty = !properties.layout, classAppend='cmp-text'}"></sly>
-</sly>
-
-<sly data-sly-use.tabModel="com.ms.wmrsicms.core.microsites.slingmodels.TabsColumnContainerModel">
-
-    <!-- Tab Navigation -->
-    <ul class="nav nav-tabs" role="tablist">
-        <sly data-sly-test="${tabModel.tabModelList}" data-sly-list.tabDetails="${tabModel.tabModelList}">
-            <li class="nav-item" role="presentation">
-                <a class="nav-link ${tabDetails.isTheLinkExternal ? 'external-tab' : ''} ${tabDetailsList.index == 0 ? 'active' : ''}" 
-                   id="tab-${tabDetails.tabTitle}-tab" 
-                   data-bs-toggle="tab" 
-                   href="#tab-${tabDetails.tabTitle}" 
-                   role="tab" 
-                   aria-controls="tab-${tabDetails.tabTitle}" 
-                   aria-selected="${tabDetailsList.index == 0 ? 'true' : 'false'}">
-                    ${tabDetails.tabTitle}
-                </a>
-            </li>
-        </sly>
-    </ul>
-
-    <!-- Tab Content -->
-    <div class="tab-content">
-        <sly data-sly-test="${tabModel.tabModelList}" data-sly-list.tabDetails="${tabModel.tabModelList}">
-            <div class="tab-pane fade ${tabDetailsList.index == 0 ? 'show active' : ''}" 
-                 id="tab-${tabDetails.tabTitle}" 
-                 role="tabpanel" 
-                 aria-labelledby="tab-${tabDetails.tabTitle}-tab">
-
-                <div>
-                    <img src="${tabDetails.image}" alt="${tabDetails.tabTitle} Image">
-                </div>
-                <div style="background-color: ${tabDetails.backgroundColor}">
-                    ${tabDetails.backgroundColor}
-                </div>
-                <div>
-                    <a href="${tabDetails.linkUrl}" ${tabDetails.isTheLinkExternal ? 'target="_blank"' : ''}>
-                        ${tabDetails.linkTitle}
-                    </a>
-                </div>
-                <div data-sly-resource="${'body-form @ resourceType=tabDetails.componentPlaceholder'}"></div>
-            </div>
+            </section>
         </sly>
     </div>
 
 </sly>
+.............................
 
-,,.................
+.cmp-tabs {
+    margin-bottom: 20px;
+}
 
-<sly data-sly-use.tabModel="com.ms.wmrsicms.core.microsites.slingmodels.TabsColumnContainerModel">
+.cmp-tabs__tablist {
+    display: flex;
+    list-style: none;
+}
 
-    <!-- Check if there are any tabs -->
-    <sly data-sly-test="${tabModel.tabModelList}" data-sly-list.tabDetails="${tabModel.tabModelList}">
+.cmp-tabs__tab {
+    padding: 10px;
+    background-color: #eee;
+    margin-right: 10px;
+    cursor: pointer;
+}
 
-        <!-- Tab container -->
-        <div class="tab-container">
-            
-            <!-- Single Tab for each item in the multifield -->
-            <div class="tab-item">
-                
-                <!-- Tab Title -->
-                <div class="tab-title">${tabDetails.tabTitle}</div>
-                
-                <!-- Image -->
-                <div class="tab-image">
-                    <img src="${tabDetails.image}" alt="${tabDetails.tabTitle}">
-                </div>
+.cmp-tabs__tabpanel {
+    padding: 20px;
+    border: 1px solid #ddd;
+    display: none;
+}
 
-                <!-- Background Color -->
-                <div class="tab-background" style="background-color:${tabDetails.backgroundColor};"></div>
-
-                <!-- Link -->
-                <div class="tab-link">
-                    <a href="${tabDetails.linkUrl}" target="${tabDetails.isTheLinkExternal ? '_blank' : '_self'}">
-                        ${tabDetails.linkTitle}
-                    </a>
-                </div>
-
-                <!-- Component Placeholder Content -->
-                <div data-sly-resource="${'body-form @resourceType=' + tabDetails.componentPlaceholder}"></div>
-
-            </div> <!-- End of Tab Item -->
-
-        </div> <!-- End of Tab Container -->
+.cmp-tabs__tabpanel.active {
+    display: block;
+}
+..............
+document.querySelectorAll('.cmp-tabs__tab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+        // Hide all tab panels
+        document.querySelectorAll('.cmp-tabs__tabpanel').forEach(function(panel) {
+            panel.classList.remove('active');
+        });
         
-    </sly>
-
-</sly>
-
+        // Show the corresponding tab panel
+        const panelId = tab.querySelector('a').getAttribute('href').substring(1);
+        document.getElementById(panelId).classList.add('active');
+    });
+});
