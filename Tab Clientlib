@@ -1,78 +1,24 @@
-<sly data-sly-use.tabModel="com.ms.wmrsicms.core.microsites.slingmodels.TabsColumnContainerModel">
+<publicationFrequency
+    jcr:primaryType="nt:unstructured"
+    sling:resourceType="granite/ui/components/coral/foundation/form/autocomplete"
+    fieldLabel="Publication Frequency"
+    name="./publicationFrequency"
+    multiple="{Boolean}false"
+    mode="edit"
+    allowAddition="{Boolean}true"
+    forceSelection="{Boolean}false">
+    
+    <!-- Add a datasource for predefined options -->
+    <datasource
+        jcr:primaryType="nt:unstructured"
+        sling:resourceType="granite/ui/components/coral/foundation/form/dataprovider"
+        path="/etc/tags/publicationFrequencyTags" />
+    
+    <!-- Options to define some default values as fallback -->
+    <values jcr:primaryType="nt:unstructured">
+        <daily jcr:primaryType="nt:unstructured" value="daily" text="Published Daily"/>
+        <weekly jcr:primaryType="nt:unstructured" value="weekly" text="Published Weekly"/>
+        <none jcr:primaryType="nt:unstructured" value="none" text="None"/>
+    </values>
 
-    <!-- Tabs Navigation -->
-    <div class="cmp-tabs">
-        <ul role="tablist" class="cmp-tabs__tablist">
-            <sly data-sly-list.tabDetails="${tabModel.tabModelList}">
-                <!-- Display Tab Titles, reversed so the latest appears first -->
-                <li class="cmp-tabs__tab" role="tab">
-                    <a href="#tab-${tabDetails.tabTitle}" role="tab">
-                        ${tabDetails.tabTitle}
-                    </a>
-                </li>
-            </sly>
-        </ul>
-    </div>
-
-    <!-- Tab Content Section -->
-    <div class="cmp-tabs__content">
-        <sly data-sly-list.tabDetails="${tabModel.tabModelList}">
-            <!-- Content for each tab -->
-            <section id="tab-${tabDetails.tabTitle}" class="cmp-tabs__tabpanel" role="tabpanel">
-                <!-- Background Color -->
-                <div class="background-color" style="background-color:${tabDetails.backgroundColor}">
-                    <!-- Image, Link, and External Link Info -->
-                    <div>${tabDetails.image}</div>
-                    <div>
-                        <a href="${tabDetails.linkUrl}" target="${tabDetails.isTheLinkExternal ? '_blank' : '_self'}">
-                            ${tabDetails.linkTitle}
-                        </a>
-                    </div>
-                    <!-- Whether the link is external -->
-                    <div>${tabDetails.isTheLinkExternal ? 'External Link' : 'Internal Link'}</div>
-                </div>
-            </section>
-        </sly>
-    </div>
-
-</sly>
-.............................
-
-.cmp-tabs {
-    margin-bottom: 20px;
-}
-
-.cmp-tabs__tablist {
-    display: flex;
-    list-style: none;
-}
-
-.cmp-tabs__tab {
-    padding: 10px;
-    background-color: #eee;
-    margin-right: 10px;
-    cursor: pointer;
-}
-
-.cmp-tabs__tabpanel {
-    padding: 20px;
-    border: 1px solid #ddd;
-    display: none;
-}
-
-.cmp-tabs__tabpanel.active {
-    display: block;
-}
-..............
-document.querySelectorAll('.cmp-tabs__tab').forEach(function(tab) {
-    tab.addEventListener('click', function() {
-        // Hide all tab panels
-        document.querySelectorAll('.cmp-tabs__tabpanel').forEach(function(panel) {
-            panel.classList.remove('active');
-        });
-        
-        // Show the corresponding tab panel
-        const panelId = tab.querySelector('a').getAttribute('href').substring(1);
-        document.getElementById(panelId).classList.add('active');
-    });
-});
+</publicationFrequency>
