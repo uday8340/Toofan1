@@ -1,24 +1,27 @@
-<publicationFrequency
-    jcr:primaryType="nt:unstructured"
-    sling:resourceType="granite/ui/components/coral/foundation/form/autocomplete"
-    fieldLabel="Publication Frequency"
-    name="./publicationFrequency"
-    multiple="{Boolean}false"
-    mode="edit"
-    allowAddition="{Boolean}true"
-    forceSelection="{Boolean}false">
-    
-    <!-- Add a datasource for predefined options -->
-    <datasource
-        jcr:primaryType="nt:unstructured"
-        sling:resourceType="granite/ui/components/coral/foundation/form/dataprovider"
-        path="/etc/tags/publicationFrequencyTags" />
-    
-    <!-- Options to define some default values as fallback -->
-    <values jcr:primaryType="nt:unstructured">
-        <daily jcr:primaryType="nt:unstructured" value="daily" text="Published Daily"/>
-        <weekly jcr:primaryType="nt:unstructured" value="weekly" text="Published Weekly"/>
-        <none jcr:primaryType="nt:unstructured" value="none" text="None"/>
-    </values>
+package com.ms.wmrsicms.core.microsites.model;
 
-</publicationFrequency>
+public class InfoPublicationLinksDetails {
+
+    private String publicationFrequency;
+    private String newTag;
+
+    public String getPublicationFrequency() {
+        // Check if publicationFrequency is "newTagText"
+        if ("newTagText".equals(publicationFrequency)) {
+            return newTag != null ? newTag : ""; // Return newTag or empty string if newTag is null
+        }
+        return publicationFrequency; // Return publicationFrequency as it is
+    }
+
+    public void setPublicationFrequency(String publicationFrequency) {
+        this.publicationFrequency = publicationFrequency;
+    }
+
+    public String getNewTag() {
+        return newTag;
+    }
+
+    public void setNewTag(String newTag) {
+        this.newTag = newTag;
+    }
+}
