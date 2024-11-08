@@ -1,0 +1,119 @@
+package com.adobe.aem.aemtraining.core.servlets;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.sling.api.SlingHttpServletRequest;
+import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.servlets.HttpConstants;
+import org.apache.sling.api.servlets.SlingAllMethodsServlet;
+import org.osgi.service.component.annotations.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.servlet.Servlet;
+import javax.servlet.ServletException;
+import java.io.IOException;
+import java.io.InputStream;
+
+@Component(
+    service = Servlet.class,
+    property = {
+       // "sling.servlet.methods=" + HttpConstants.METHOD_POST,
+        "sling.servlet.paths=" + "/bin/process-excel"
+    }
+)
+public class ExcelToJsonServlet extends SlingAllMethodsServlet {
+
+    private static final Logger log = LoggerFactory.getLogger(ExcelToJsonServlet.class);
+    
+    @Override
+    protected void doGet(final SlingHttpServletRequest req, final SlingHttpServletResponse resp)
+            throws ServletException, IOException {
+        resp.setContentType("text/plain");
+        resp.getWriter().write("Hello, this is a Path based servlet !");
+    }
+
+    @Override
+    protected void doPost(SlingHttpServletRequest request, SlingHttpServletResponse response)
+            throws ServletException, IOException {
+
+        log.info("Starting Excel file processing...");
+
+        InputStream fileInputStream = null;
+        try {
+            fileInputStream = request.getRequestParameter("excelFile").getInputStream();
+            log.info("Excel file successfully received from request.");
+
+            JsonArray jsonArray = new JsonArray();
+            try (Workbook workbook = new XSSFWorkbook(fileInputStream)) {
+                log.info("Excel workbook opened successfully.");
+
+                Sheet sheet = workbook.getSheetAt(0);
+                log.info("Reading data from sheet: {}", sheet.getSheetName());
+
+                for (Row row : sheet) {
+                    JsonObject jsonRow = new JsonObject();
+                    jsonRow.addProperty("Portfolio", row.getCell(0).getStringCellValue());
+                    jsonRow.addProperty("Drivers", row.getCell(1).getStringCellValue());
+
+                    // Process boolean cells with type checking
+                    jsonRow.addProperty("Maps", getBooleanCellValue(row.getCell(2)));
+                    jsonRow.addProperty("Msps", getBooleanCellValue(row.getCell(3)));
+                    jsonRow.addProperty("Pm", getBooleanCellValue(row.getCell(4)));
+                    jsonRow.addProperty("Cga", getBooleanCellValue(row.getCell(5)));
+                    jsonRow.addProperty("Brokerage", getBooleanCellValue(row.getCell(6)));
+                    jsonRow.addProperty("Offshore", getBooleanCellValue(row.getCell(7)));
+
+                    jsonArray.add(jsonRow);
+                    log.debug("Processed row: {}", jsonRow);
+                }
+
+                log.info("Excel data successfully converted to JSON.");
+
+            } catch (Exception e) {
+                log.error("Error reading data from Excel file: ", e);
+                response.setStatus(SlingHttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                return;
+            }
+
+            response.setContentType("application/json");
+            response.getWriter().write(jsonArray.toString());
+            log.info("JSON response written successfully.");
+
+        } catch (Exception e) {
+            log.error("Error processing Excel file upload: ", e);
+            response.setStatus(SlingHttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        } finally {
+            if (fileInputStream != null) {
+                try {
+                    fileInputStream.close();
+                } catch (IOException e) {
+                    log.warn("Failed to close file input stream: ", e);
+                }
+            }
+        }
+
+        log.info("Excel file processing completed.");
+    }
+
+    private boolean getBooleanCellValue(Cell cell) {
+        if (cell == null) {
+            return false;
+        }
+        switch (cell.getCellType()) {
+            case BOOLEAN:
+                return cell.getBooleanCellValue();
+            case STRING:
+                return Boolean.parseBoolean(cell.getStringCellValue().trim());
+            case NUMERIC:
+                return cell.getNumericCellValue() != 0; // treat non-zero as true
+            default:
+                return false;
+        }
+    }
+}
