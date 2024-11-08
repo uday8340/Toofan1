@@ -1,0 +1,68 @@
+package com.yourproject.core.servlets;
+
+import com.day.cq.dam.api.Asset;
+import com.day.cq.dam.api.DamConstants;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import org.apache.commons.io.IOUtils;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.sling.api.SlingHttpServletRequest;
+import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.servlets.HttpConstants;
+import org.apache.sling.api.servlets.SlingAllMethodsServlet;
+import org.apache.sling.servlets.annotations.SlingServletPaths;
+import org.osgi.service.component.annotations.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.servlet.ServletException;
+import java.io.IOException;
+import java.io.InputStream;
+
+@Component(service = SlingAllMethodsServlet.class)
+@SlingServletPaths("/bin/process-excel")
+public class ExcelToJsonServlet extends SlingAllMethodsServlet {
+
+    private static final Logger log = LoggerFactory.getLogger(ExcelToJsonServlet.class);
+
+    @Override
+    protected void doPost(SlingHttpServletRequest request, SlingHttpServletResponse response)
+            throws ServletException, IOException {
+        
+        Node node = request.getResource().adaptTo(Node.class);
+        
+        // Get the uploaded file from the request
+        InputStream fileInputStream = request.getRequestParameter("excelFile").getInputStream();
+
+        JsonArray jsonArray = new JsonArray();
+        try (Workbook workbook = new XSSFWorkbook(fileInputStream)) {
+            Sheet sheet = workbook.getSheetAt(0);
+            for (Row row : sheet) {
+                JsonObject jsonRow = new JsonObject();
+                jsonRow.addProperty("Portfolio", row.getCell(0).getStringCellValue());
+                jsonRow.addProperty("Drivers", row.getCell(1).getStringCellValue());
+                jsonRow.addProperty("Maps", row.getCell(2).getBooleanCellValue());
+                jsonRow.addProperty("Msps", row.getCell(3).getBooleanCellValue());
+                jsonRow.addProperty("Pm", row.getCell(4).getBooleanCellValue());
+                jsonRow.addProperty("Cga", row.getCell(5).getBooleanCellValue());
+                jsonRow.addProperty("Brokerage", row.getCell(6).getBooleanCellValue());
+                jsonRow.addProperty("Offshore", row.getCell(7).getBooleanCellValue());
+
+                jsonArray.add(jsonRow);
+            }
+        } catch (Exception e) {
+            log.error("Error processing Excel file: ", e);
+            response.setStatus(SlingHttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            return;
+        }
+        
+        // Write JSON response
+        response.setContentType("application/json");
+        response.getWriter().write(jsonArray.toString());
+    }
+}
