@@ -4,3 +4,12 @@
     <version>2.20.0</version>
     <scope>provided</scope>
 </dependency>
+
+
+@Component(
+    service = Servlet.class,
+    property = {
+        "sling.servlet.methods=" + HttpConstants.METHOD_POST,
+        "sling.servlet.paths=" + "/bin/process-excel"
+    }
+)
