@@ -30,13 +30,6 @@ import java.io.InputStream;
 public class ExcelToJsonServlet extends SlingAllMethodsServlet {
 
     private static final Logger log = LoggerFactory.getLogger(ExcelToJsonServlet.class);
-    
-    @Override
-    protected void doGet(final SlingHttpServletRequest req, final SlingHttpServletResponse resp)
-            throws ServletException, IOException {
-        resp.setContentType("text/plain");
-        resp.getWriter().write("Hello, this is a Path based servlet !");
-    }
 
     @Override
     protected void doPost(SlingHttpServletRequest request, SlingHttpServletResponse response)
@@ -62,11 +55,11 @@ public class ExcelToJsonServlet extends SlingAllMethodsServlet {
                     jsonRow.addProperty("Drivers", row.getCell(1).getStringCellValue());
 
                     // Process boolean cells with type checking
-                    jsonRow.addProperty("Maps", getBooleanCellValue(row.getCell(2)));
-                    jsonRow.addProperty("Msps", getBooleanCellValue(row.getCell(3)));
-                    jsonRow.addProperty("Pm", getBooleanCellValue(row.getCell(4)));
-                    jsonRow.addProperty("Cga", getBooleanCellValue(row.getCell(5)));
-                    jsonRow.addProperty("Brokerage", getBooleanCellValue(row.getCell(6)));
+                    jsonRow.addProperty("Platform", getBooleanCellValue(row.getCell(2)));
+                    jsonRow.addProperty("UMA", getBooleanCellValue(row.getCell(3)));
+                    jsonRow.addProperty("MAPS", getBooleanCellValue(row.getCell(4)));
+                    jsonRow.addProperty("MSPs", getBooleanCellValue(row.getCell(5)));
+                    jsonRow.addProperty("PM, CGA  and Brokerage", getBooleanCellValue(row.getCell(6)));
                     jsonRow.addProperty("Offshore", getBooleanCellValue(row.getCell(7)));
 
                     jsonArray.add(jsonRow);
