@@ -1,0 +1,72 @@
+package com.yourproject.core.models;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.io.IOUtils;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.models.annotations.Model;
+import org.apache.sling.models.annotations.injectorspecific.Self;
+import org.apache.sling.models.annotations.injectorspecific.ValueMapValue;
+
+import javax.annotation.PostConstruct;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@Model(adaptables = Resource.class)
+public class ExcelToJsonModel {
+
+    @Self
+    private Resource resource;
+
+    @ValueMapValue
+    private String excelFile;
+
+    private String jsonOutput;
+
+    @PostConstruct
+    protected void init() {
+        if (excelFile != null) {
+            try (ResourceResolver resolver = resource.getResourceResolver();
+                 InputStream inputStream = resolver.getResource(excelFile).adaptTo(InputStream.class)) {
+
+                if (inputStream != null) {
+                    jsonOutput = parseExcelToJson(inputStream);
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private String parseExcelToJson(InputStream inputStream) throws Exception {
+        XSSFWorkbook workbook = new XSSFWorkbook(inputStream);
+        XSSFSheet sheet = workbook.getSheetAt(0);
+
+        List<Map<String, Object>> records = new ArrayList<>();
+
+        for (int i = 1; i <= sheet.getLastRowNum(); i++) {  // Assuming row 0 is header
+            XSSFRow row = sheet.getRow(i);
+            if (row != null) {
+                Map<String, Object> record = new HashMap<>();
+                record.put("Column1", row.getCell(0).getStringCellValue());
+                record.put("Column2", row.getCell(1).getStringCellValue());
+                // Add additional columns as needed
+                records.add(record);
+            }
+        }
+
+        workbook.close();
+        return new ObjectMapper().writeValueAsString(records);
+    }
+
+    public String getJsonOutput() {
+        return jsonOutput;
+    }
+}
