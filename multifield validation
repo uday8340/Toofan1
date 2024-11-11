@@ -1,0 +1,18 @@
+<script>
+    (function () {
+        var multifield = document.querySelector('[name="./buttons"]');
+        
+        // Function to check the number of items in the multifield
+        function validateMultifield() {
+            var items = multifield.querySelectorAll('.granite multifield-item');
+            if (items.length > 2) {
+                alert('You can only add a maximum of 2 buttons.');
+                // Remove the last item (if there are more than 2)
+                items[items.length - 1].remove();
+            }
+        }
+
+        // Attach validation on add/remove events for the multifield
+        multifield.addEventListener('granite:data', validateMultifield);
+    })();
+</script>
