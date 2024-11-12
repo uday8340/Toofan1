@@ -16,3 +16,38 @@
         multifield.addEventListener('granite:data', validateMultifield);
     })();
 </script>
+
+
+(function(document, $) {
+    "use strict";
+    
+    // Run this when the dialog is fully loaded
+    $(document).on("dialog-ready", function() {
+        // Select the multifield you want to limit
+        const multifield = $("coral-multifield[data-maxitems='2']");
+        
+        // Set a maxItems data attribute for easy selection (can be set directly in the dialog XML if possible)
+        multifield.attr("data-maxitems", 2);
+
+        // Listen for add button click on multifield
+        multifield.on("coral-multifield:itemadded", function() {
+            const maxItems = parseInt(multifield.data("maxitems"));
+            const items = multifield[0].items.getAll().length;
+
+            if (items >= maxItems) {
+                multifield.find("button.coral3-Multifield-add").attr("disabled", true);
+            }
+        });
+
+        // Listen for remove button click on multifield
+        multifield.on("coral-multifield:itemremoved", function() {
+            const maxItems = parseInt(multifield.data("maxitems"));
+            const items = multifield[0].items.getAll().length;
+
+            if (items < maxItems) {
+                multifield.find("button.coral3-Multifield-add").attr("disabled", false);
+            }
+        });
+    });
+})(document, Granite.$);
+
