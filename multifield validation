@@ -1,53 +1,44 @@
-<script>
-    (function () {
-        var multifield = document.querySelector('[name="./buttons"]');
-        
-        // Function to check the number of items in the multifield
-        function validateMultifield() {
-            var items = multifield.querySelectorAll('.granite multifield-item');
-            if (items.length > 2) {
-                alert('You can only add a maximum of 2 buttons.');
-                // Remove the last item (if there are more than 2)
-                items[items.length - 1].remove();
-            }
-        }
-
-        // Attach validation on add/remove events for the multifield
-        multifield.addEventListener('granite:data', validateMultifield);
-    })();
-</script>
-
-
-(function(document, $) {
+(function ($, window, document) {
     "use strict";
-    
-    // Run this when the dialog is fully loaded
-    $(document).on("dialog-ready", function() {
-        // Select the multifield you want to limit
-        const multifield = $("coral-multifield[data-maxitems='2']");
-        
-        // Set a maxItems data attribute for easy selection (can be set directly in the dialog XML if possible)
-        multifield.attr("data-maxitems", 2);
 
-        // Listen for add button click on multifield
-        multifield.on("coral-multifield:itemadded", function() {
-            const maxItems = parseInt(multifield.data("maxitems"));
-            const items = multifield[0].items.getAll().length;
+    // Register the custom validator using the registry
+    var registry = $(window).adaptTo("foundation-registry");
 
-            if (items >= maxItems) {
-                multifield.find("button.coral3-Multifield-add").attr("disabled", true);
+    registry.register("foundation.validation.validator", {
+        selector: "[data-validation='maxMultifieldItems']", // Target elements with this data attribute
+        validate: function (el) {
+            var $el = $(el);
+            var maxItems = 2; // Set the maximum number of items allowed
+            var items = $el.children("coral-multifield-item"); // Get all the items in the multifield
+
+            if (items.length > maxItems) {
+                return "You can only add up to " + maxItems + " buttons.";
             }
-        });
 
-        // Listen for remove button click on multifield
-        multifield.on("coral-multifield:itemremoved", function() {
-            const maxItems = parseInt(multifield.data("maxitems"));
-            const items = multifield[0].items.getAll().length;
+            return null; // Return null if validation is successful
+        }
+    });
 
-            if (items < maxItems) {
-                multifield.find("button.coral3-Multifield-add").attr("disabled", false);
-            }
+    // Listen for item addition and apply the validator dynamically
+    $(document).on("dialog-ready", function () {
+        $("coral-multifield[data-validation='maxMultifieldItems']").each(function () {
+            var multifield = $(this);
+
+            // Disable the add button if max items are already added
+            var checkLimit = function () {
+                var items = multifield.children("coral-multifield-item");
+                var addButton = multifield.find("button.coral3-Multifield-add");
+                addButton.prop("disabled", items.length >= maxItems);
+            };
+
+            // Run the check on initialization
+            checkLimit();
+
+            // Listen to multifield item added event
+            multifield.on("coral-multifield:itemadded coral-multifield:itemremoved", function () {
+                checkLimit();
+            });
         });
     });
-})(document, Granite.$);
 
+})(jQuery, window, document);
