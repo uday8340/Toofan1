@@ -1,0 +1,44 @@
+<div data-sly-use.clienttab="/the/granite/sightly/templates/clientlib.html" data-sly-unwrap>
+    <clientlib data-sly-call="${clienttab.all @ categories=['micrositen.generalLinksList']}" data-sly-unwrap />
+</div>
+
+<sly data-sly-test="${wcmmode.edit}">
+    <sly data-sly-use.templates="core/wcm/components/commons/v1/templates.html">
+        <sly data-sly-call="${templates.placeholder @ isEmpty=properties.title, classAppend='mp-text'}"></sly>
+    </sly>
+</sly>
+
+<div data-sly-use.model="com.ms.wmreims.core.microsites.slingmodels.LinkedListModel" 
+     class="listing-container ${(model.showBorder ? 'box-border' : 'no-border')}" 
+     style="border-color: ${(model.color) ? model.color : ''}">
+    
+    <h3 class="listing-title" data-sly-test="${model.title}">${model.title}</h3>
+
+    <sly data-sly-list.strategy="${model.linkedList}">
+        <div class="listing-items">
+            <sly data-sly-test="${strategy.subtitle}">
+                <h4 class="listing-subtitle">${strategy.subtitle}</h4>
+            </sly>
+            
+            <sly data-sly-test="${strategy.links && !strategy.links.isEmpty}">
+                <ul class="link-items ${(strategy.showLinkDivider ? 'show-link-divider' : '')} ${(strategy.showLinksInTwoColumns ? 'show-in-two-columns' : '')}" 
+                    data-sly-list.link="${strategy.links}">
+                    
+                    <li class="link-item">
+                        <span class="link-item-desc" data-sly-test="${link.linkDescription}">${link.linkDescription}</span>
+                        
+                        <a class="link-item-a listing-a-link" 
+                           href="${link.linkUrl}" 
+                           target="${link.isTheLinkExternal ? '_blank' : '_self'}">
+                            ${link.linkTitle}
+                            
+                            <sly data-sly-test="${link.isTheLinkExternal}">
+                                <campfire-enterprise-icon></campfire-enterprise-icon>
+                            </sly>
+                        </a>
+                    </li>
+                </ul>
+            </sly>
+        </div>
+    </sly>
+</div>
