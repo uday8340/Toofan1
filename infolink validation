@@ -41,3 +41,52 @@
         addTooltipIfTruncatedLines(".line-clamp");
     });
 })(document, Granite.$, Coral);
+
+
+(function($, window, document) {
+    "use strict";
+
+    var registry = $(window).adaptTo("Foundation-registry");
+
+    // Register the show/hide functionality for the dropdown selection
+    registry.register("foundation.contentloaded", function() {
+        // Iterate over each multifield item and apply the show/hide logic
+        $(".cmp-list_editor coral-select.cq-dialog-dropdown-showhide", document).each(function(index, element) {
+            var target = $(element).data("cq-dialog-dropdown-showhide-target");
+            if (target) {
+                Coral.commons.ready(element, function(component) {
+                    showHide(component, target, element);  // Apply show/hide on load
+                    component.on("change", function() {
+                        showHide(component, target, element);  // Apply show/hide when value changes
+                    });
+                });
+            }
+        });
+
+        // Apply showHide function for the initial state
+        $(".cq-dialog-dropdown-showhide", document).each(function(index, element) {
+            var target = $(element).data("cq-dialog-dropdown-showhide-target");
+            if (target) {
+                Coral.commons.ready(element, function(component) {
+                    showHide(component, target, element);
+                });
+            }
+        });
+
+        // Function to show/hide elements based on the selected value
+        function showHide(component, target, element) {
+            var value = component.value;
+            // Find the parent multifield item for this specific dropdown element
+            var parentMultifield = $(element).closest(".granite-collection-item");
+            var targetElement = parentMultifield.find(target);
+
+            // Hide all target elements in the current context and then show the one that matches the selected value
+            parentMultifield.find(target).addClass("hide");  // Hide all targets within the same multifield
+            targetElement.filter("[data-showhidetargetvalue='" + value + "']").removeClass("hide");  // Show only the selected one
+        }
+
+        // Handle the case where the text is truncated and add a tooltip
+        addTooltipIfTruncated(".line-clamp");
+    });
+
+})(jQuery, window, document);
