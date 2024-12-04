@@ -1,53 +1,43 @@
-(function ($, Granite) {
+(function(document, $, Coral) {
     "use strict";
 
-    $(document).on("dialog-ready", function () {
-        $(".cq-dialog-dropdown-showhide").each(function () {
-            var $dropdown = $(this);
+    // Wait for the content to be fully loaded before initializing
+    $(document).on("foundation-contentloaded", function(e) {
+        // Iterate over each element with the class .cmp-list_editor
+        $(".cmp-list_editor coral-select.cq-dialog-dropdown-showhide", e.target).each(function() {
+            var $element = $(this);
+            var target = $element.data("cq-dialog-dropdown-showhide-target");
 
-            // Attach change event handler
-            $dropdown.on("change", function () {
-                var $parent = $dropdown.closest(".coral-Multifield-item");
-                var value = $dropdown.val();
+            if (target) {
+                // Initialize the Coral component for the dropdown
+                Coral.commons.ready($element[0], function(component) {
+                    // Call showHide function whenever the component changes
+                    component.on("change", function() {
+                        showHide(component, target);
+                    });
 
-                // Toggle visibility based on the selected value
-                $parent.find(".cq-dialog-dropdown-showhide-target").each(function () {
-                    var $target = $(this);
-                    if ($target.hasClass(value)) {
-                        $target.removeClass("hide");
-                    } else {
-                        $target.addClass("hide");
-                    }
+                    // Initial show/hide action for the current state of the dropdown
+                    showHide(component, target);
                 });
-            });
-
-            // Trigger change event on dialog load to set the correct state
-            $dropdown.trigger("change");
-        });
-    });
-})(jQuery, Granite);
-
-
-$(document).on('change', '[name$="newTagText"]', function() {
-    var $multifield = $(this).closest('.cq-dialog-multifield');
-    // Ensure only the newly selected multifield is updated
-    $multifield.find('.newTag').show();
-});
-
-
-$(document).ready(function() {
-    // Ensure each multifield behaves independently
-    $('.cq-dialog-multifield').each(function() {
-        var $multifield = $(this);
-
-        $multifield.find('select[name$="publicationFrequency"]').on('change', function() {
-            var $newTagText = $multifield.find('.newTagText');
-            if ($(this).val() === 'SomeValue') { // Change this to your condition
-                $newTagText.show();
-            } else {
-                $newTagText.hide();
             }
         });
     });
-});
 
+    // Function to show/hide the new tag field based on the dropdown value
+    function showHide(component, target) {
+        var value = component.value;
+        var $target = $(target);
+
+        // Hide all target elements first
+        $target.not(".hide").addClass("hide");
+
+        // Show the specific target element based on the selected value
+        $target.filter("[data-showhidetargetvalue='" + value + "']").removeClass("hide");
+    }
+
+    // Wait for the document to be ready before applying any tooltips
+    $(document).ready(function() {
+        // Apply tooltips for truncated lines, if needed
+        addTooltipIfTruncatedLines(".line-clamp");
+    });
+})(document, Granite.$, Coral);
