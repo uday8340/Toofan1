@@ -1,22 +1,19 @@
 (function(document, $, Coral) {
     "use strict";
 
-    // Wait for the foundation content to be loaded
     $(document).on("foundation-contentloaded", function(e) {
-        // Iterate over each multifield item and apply the show/hide logic
         $(".cmp-list_editor coral-select.cq-dialog-dropdown-showhide", e.target).each(function(index, element) {
             var target = $(element).data("cq-dialog-dropdown-showhide-target");
             if (target) {
                 Coral.commons.ready(element, function(component) {
                     showHide(component, target, element);
                     component.on("change", function() {
-                        showHide(component, target, element);  // Ensure the show/hide logic is applied on change
+                        showHide(component, target, element);
                     });
                 });
             }
         });
 
-        // Apply showHide function for the initial state
         $(".cq-dialog-dropdown-showhide", e.target).each(function(index, element) {
             var target = $(element).data("cq-dialog-dropdown-showhide-target");
             if (target) {
@@ -26,20 +23,27 @@
             }
         });
 
-        // Function to show/hide elements based on the selected value
         function showHide(component, target, element) {
             var value = component.value;
-            // Find the parent multifield item for this specific dropdown element
             var parentMultifield = $(element).closest(".granite-collection-item");
             var targetElement = parentMultifield.find(target);
 
-            // Hide all target elements in the current context and then show the one that matches the selected value
-            parentMultifield.find(target).addClass("hide");  // Hide all targets within the same multifield
-            targetElement.filter("[data-showhidetargetvalue='" + value + "']").removeClass("hide");  // Show only the selected one
+            parentMultifield.find(target).addClass("hide");
+            targetElement.filter("[data-showhidetargetvalue='" + value + "']").removeClass("hide");
         }
 
-        // Handle the case where the text is truncated and add a tooltip
+        // Tooltip function to show full text when truncated
+        function addTooltipIfTruncated(selector) {
+            $(selector).each(function() {
+                if (this.scrollWidth > this.clientWidth) {
+                    $(this).attr('title', $(this).text());
+                }
+            });
+        }
+
+        // Call the tooltip function
         addTooltipIfTruncated(".line-clamp");
+
     });
 
 })(document, Granite.$, Coral);
