@@ -1,0 +1,28 @@
+(function ($, Granite) {
+    "use strict";
+
+    $(document).on("dialog-ready", function () {
+        $(".cq-dialog-dropdown-showhide").each(function () {
+            var $dropdown = $(this);
+
+            // Attach change event handler
+            $dropdown.on("change", function () {
+                var $parent = $dropdown.closest(".coral-Multifield-item");
+                var value = $dropdown.val();
+
+                // Toggle visibility based on the selected value
+                $parent.find(".cq-dialog-dropdown-showhide-target").each(function () {
+                    var $target = $(this);
+                    if ($target.hasClass(value)) {
+                        $target.removeClass("hide");
+                    } else {
+                        $target.addClass("hide");
+                    }
+                });
+            });
+
+            // Trigger change event on dialog load to set the correct state
+            $dropdown.trigger("change");
+        });
+    });
+})(jQuery, Granite);
