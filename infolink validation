@@ -33,3 +33,21 @@ $(document).on('change', '[name$="newTagText"]', function() {
     // Ensure only the newly selected multifield is updated
     $multifield.find('.newTag').show();
 });
+
+
+$(document).ready(function() {
+    // Ensure each multifield behaves independently
+    $('.cq-dialog-multifield').each(function() {
+        var $multifield = $(this);
+
+        $multifield.find('select[name$="publicationFrequency"]').on('change', function() {
+            var $newTagText = $multifield.find('.newTagText');
+            if ($(this).val() === 'SomeValue') { // Change this to your condition
+                $newTagText.show();
+            } else {
+                $newTagText.hide();
+            }
+        });
+    });
+});
+
