@@ -47,3 +47,24 @@
     });
 
 })(document, Granite.$, Coral);
+
+
+$(document).ready(function() {
+    // Find the dropdown and the multifield container
+    var dropdown = $("select[name='./dropdown']");
+    var multifieldContainer = $(".coral-Multifield");
+ 
+    // Function to handle dropdown change event
+    dropdown.on('change', function() {
+        var selectedValue = $(this).val();
+        // Check the selected value and add the textbox accordingly
+        if (selectedValue === "option2") {  // Condition when the textbox should be shown
+            // Dynamically add a textbox to the multifield
+            var textboxHTML = '<input type="text" class="coral-Form-Textfield" placeholder="Enter text here"/>';
+            multifieldContainer.append(textboxHTML);  // Add to the multifield
+        } else {
+            // Remove all dynamically added textboxes if any
+            multifieldContainer.find("input[type='text']").remove();
+        }
+    });
+});
