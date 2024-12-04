@@ -26,3 +26,10 @@
         });
     });
 })(jQuery, Granite);
+
+
+$(document).on('change', '[name$="newTagText"]', function() {
+    var $multifield = $(this).closest('.cq-dialog-multifield');
+    // Ensure only the newly selected multifield is updated
+    $multifield.find('.newTag').show();
+});
