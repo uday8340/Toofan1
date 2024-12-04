@@ -1,70 +1,23 @@
 (function(document, $, Coral) {
     "use strict";
 
-    // Wait for the content to be fully loaded before initializing
+    // Wait for the foundation content to be loaded
     $(document).on("foundation-contentloaded", function(e) {
-        // Iterate over each element with the class .cmp-list_editor
-        $(".cmp-list_editor coral-select.cq-dialog-dropdown-showhide", e.target).each(function() {
-            var $element = $(this);
-            var target = $element.data("cq-dialog-dropdown-showhide-target");
-
-            if (target) {
-                // Initialize the Coral component for the dropdown
-                Coral.commons.ready($element[0], function(component) {
-                    // Call showHide function whenever the component changes
-                    component.on("change", function() {
-                        showHide(component, target);
-                    });
-
-                    // Initial show/hide action for the current state of the dropdown
-                    showHide(component, target);
-                });
-            }
-        });
-    });
-
-    // Function to show/hide the new tag field based on the dropdown value
-    function showHide(component, target) {
-        var value = component.value;
-        var $target = $(target);
-
-        // Hide all target elements first
-        $target.not(".hide").addClass("hide");
-
-        // Show the specific target element based on the selected value
-        $target.filter("[data-showhidetargetvalue='" + value + "']").removeClass("hide");
-    }
-
-    // Wait for the document to be ready before applying any tooltips
-    $(document).ready(function() {
-        // Apply tooltips for truncated lines, if needed
-        addTooltipIfTruncatedLines(".line-clamp");
-    });
-})(document, Granite.$, Coral);
-
-
-(function($, window, document) {
-    "use strict";
-
-    var registry = $(window).adaptTo("Foundation-registry");
-
-    // Register the show/hide functionality for the dropdown selection
-    registry.register("foundation.contentloaded", function() {
         // Iterate over each multifield item and apply the show/hide logic
-        $(".cmp-list_editor coral-select.cq-dialog-dropdown-showhide", document).each(function(index, element) {
+        $(".cmp-list_editor coral-select.cq-dialog-dropdown-showhide", e.target).each(function(index, element) {
             var target = $(element).data("cq-dialog-dropdown-showhide-target");
             if (target) {
                 Coral.commons.ready(element, function(component) {
-                    showHide(component, target, element);  // Apply show/hide on load
+                    showHide(component, target, element);
                     component.on("change", function() {
-                        showHide(component, target, element);  // Apply show/hide when value changes
+                        showHide(component, target, element);  // Ensure the show/hide logic is applied on change
                     });
                 });
             }
         });
 
         // Apply showHide function for the initial state
-        $(".cq-dialog-dropdown-showhide", document).each(function(index, element) {
+        $(".cq-dialog-dropdown-showhide", e.target).each(function(index, element) {
             var target = $(element).data("cq-dialog-dropdown-showhide-target");
             if (target) {
                 Coral.commons.ready(element, function(component) {
@@ -89,4 +42,4 @@
         addTooltipIfTruncated(".line-clamp");
     });
 
-})(jQuery, window, document);
+})(document, Granite.$, Coral);
