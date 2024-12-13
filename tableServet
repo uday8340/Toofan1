@@ -93,3 +93,11 @@ public class TableExcelToJsonServlet extends SlingAllMethodsServlet {
         }
     }
 }
+
+
+<sly data-sly-test="${tableManualVal.localRunMode == 'auth'}">
+    <div class="downloadTable">
+        <sly data-sly-use.json="${'/bin/convertExcelToJson?path=' + tableManualVal.path @ format=[]}"></sly>
+        <pre>${json @ context='json'}</pre>
+    </div>
+</sly>
