@@ -1,117 +1,78 @@
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+@Component(service = Servlet.class, property = {
+    "sling.servlet.paths=/bin/wm3dr/getTableFile",
+    "sling.servlet.methods=get"
+})
+public class GetTableFile extends SlingAllMethodsServlet {
 
-public JsonObject getJsonFromExcel() {
-    JsonObject jsonObject = new JsonObject();
-    JsonArray rowsArray = new JsonArray();
+    private static final long serialVersionUID = 1L;
 
-    for (List<String> row : rowList) {
-        JsonObject rowJson = new JsonObject();
-        for (int i = 0; i < columnValues.size(); i++) {
-            String columnName = columnValues.get(i);
-            String value = i < row.size() ? row.get(i) : "";
-            rowJson.addProperty(columnName, value);
-        }
-        rowsArray.add(rowJson);
-    }
+    @Reference
+    private ResourceResolverFactory resourceResolverFactory;
 
-    jsonObject.add("rows", rowsArray);
-    return jsonObject;
-}
-
-
-package your.package.name;
-
-import com.google.gson.JsonObject;
-import org.apache.sling.api.SlingHttpServletRequest;
-import org.apache.sling.api.SlingHttpServletResponse;
-import org.apache.sling.api.resource.Resource;
-import org.apache.sling.api.resource.ResourceResolver;
-import org.apache.sling.api.servlets.SlingAllMethodsServlet;
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.propertytypes.ServiceDescription;
-import org.osgi.service.component.propertytypes.ServiceVendor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.servlet.Servlet;
-import java.io.PrintWriter;
-
-@Component(service = Servlet.class,
-        property = {
-                "sling.servlet.paths=/bin/get-excel-json",
-                "sling.servlet.methods=GET"
-        })
-@ServiceDescription("Servlet to convert Excel file to JSON")
-@ServiceVendor("Your Vendor")
-public class ExcelToJsonServlet extends SlingAllMethodsServlet {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ExcelToJsonServlet.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(GetTableFile.class);
 
     @Override
-    protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response) {
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
+    protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response)
+            throws ServletException, IOException {
 
-        try {
-            ResourceResolver resourceResolver = request.getResourceResolver();
-            String resourcePath = request.getParameter("resourcePath");
+        LOGGER.debug("******* GetTableFile Servlet Initialized ********");
 
-            if (resourcePath == null || resourcePath.isEmpty()) {
-                response.setStatus(SlingHttpServletResponse.SC_BAD_REQUEST);
-                response.getWriter().write("{\"error\":\"Resource path is required\"}");
-                return;
-            }
+        // Retrieve request parameters
+        String path = request.getParameter("path");
+        LOGGER.debug("Requested JCR path: {}", path);
 
-            Resource resource = resourceResolver.getResource(resourcePath);
+        if (path == null || path.isEmpty()) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.getWriter().write("{\"error\":\"Path parameter is missing or invalid\"}");
+            return;
+        }
+
+        // Initialize ResourceResolver
+        Map<String, Object> params = new HashMap<>();
+        params.put(ResourceResolverFactory.SUBSERVICE, "readSystem");
+
+        try (ResourceResolver resourceResolver = resourceResolverFactory.getServiceResourceResolver(params)) {
+            // Fetch the resource from JCR
+            Resource resource = resourceResolver.getResource(path);
             if (resource == null) {
-                response.setStatus(SlingHttpServletResponse.SC_NOT_FOUND);
-                response.getWriter().write("{\"error\":\"Resource not found at the specified path\"}");
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                response.getWriter().write("{\"error\":\"Resource not found at path: " + path + "\"}");
                 return;
             }
 
-            TableDynamicModel model = resource.adaptTo(TableDynamicModel.class);
-            if (model == null) {
-                response.setStatus(SlingHttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                response.getWriter().write("{\"error\":\"Failed to adapt resource to TableDynamicModel\"}");
-                return;
+            // Convert file content to JSON format
+            ValueMap properties = resource.adaptTo(ValueMap.class);
+            if (properties != null) {
+                Map<String, Object> jsonMap = new HashMap<>();
+                properties.forEach(jsonMap::put);
+
+                // Write JSON to the response
+                response.setContentType("application/json");
+                response.setCharacterEncoding("UTF-8");
+                response.getWriter().write(new ObjectMapper().writeValueAsString(jsonMap));
+                LOGGER.debug("JSON response sent successfully.");
+            } else {
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                response.getWriter().write("{\"error\":\"Unable to adapt resource to ValueMap\"}");
             }
-
-            JsonObject json = model.getJsonFromExcel();
-
-            PrintWriter writer = response.getWriter();
-            writer.print(json.toString());
         } catch (Exception e) {
-            LOGGER.error("Error generating JSON from Excel", e);
-            response.setStatus(SlingHttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            try {
-                response.getWriter().write("{\"error\":\"An error occurred while processing the request\"}");
-            } catch (Exception ignored) {
-                // Ignored
-            }
+            LOGGER.error("Error occurred while processing the request: ", e);
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("{\"error\":\"An unexpected error occurred\"}");
         }
     }
 }
 
 
+<sly data-sly-test="${tableManualVal.localRunMode == 'auth'}">
+    <div class="downloadTable">
+        <sly data-sly-use.jsonContent="${'java.net.URL' @ args='/bin/wm3dr/getTableFile?path=' + tableManualVal.path}">
+        </sly>
+        <pre>${jsonContent.openStream() @ context='json'}</pre>
+    </div>
+</sly>
 
 
-<div class="excel-json">
-    <button id="fetch-json">Fetch JSON</button>
-    <pre id="json-output"></pre>
-</div>
 
-<script>
-    document.getElementById('fetch-json').addEventListener('click', function () {
-        const resourcePath = '/content/your-resource-path'; // Update with actual resource path
-        const url = `/bin/get-excel-json?resourcePath=${encodeURIComponent(resourcePath)}`;
 
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('json-output').textContent = JSON.stringify(data, null, 2);
-            })
-            .catch(error => console.error('Error:', error));
-    });
-</script>
 
