@@ -1,78 +1,109 @@
-@Component(service = Servlet.class, property = {
-    "sling.servlet.paths=/bin/wm3dr/getTableFile",
-    "sling.servlet.methods=get"
-})
-public class GetTableFile extends SlingAllMethodsServlet {
+package com.example.core.servlets;
 
-    private static final long serialVersionUID = 1L;
+import com.google.gson.Gson;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.sling.api.SlingHttpServletRequest;
+import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.servlets.SlingAllMethodsServlet;
+import org.osgi.service.component.annotations.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-    @Reference
-    private ResourceResolverFactory resourceResolverFactory;
+import javax.jcr.Node;
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
+import javax.servlet.Servlet;
+import java.io.InputStream;
+import java.util.*;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(GetTableFile.class);
+@Component(
+    service = Servlet.class,
+    property = {
+        "sling.servlet.methods=GET",
+        "sling.servlet.paths=/bin/custom/excel-to-json"
+    }
+)
+public class ExcelToJsonServlet extends SlingAllMethodsServlet {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExcelToJsonServlet.class);
 
     @Override
-    protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response)
-            throws ServletException, IOException {
+    protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response) {
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
 
-        LOGGER.debug("******* GetTableFile Servlet Initialized ********");
+        String resourcePath = request.getParameter("resourcePath");
 
-        // Retrieve request parameters
-        String path = request.getParameter("path");
-        LOGGER.debug("Requested JCR path: {}", path);
-
-        if (path == null || path.isEmpty()) {
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            response.getWriter().write("{\"error\":\"Path parameter is missing or invalid\"}");
+        if (resourcePath == null || resourcePath.isEmpty()) {
+            LOGGER.error("Resource path is missing");
+            response.setStatus(SlingHttpServletResponse.SC_BAD_REQUEST);
             return;
         }
 
-        // Initialize ResourceResolver
-        Map<String, Object> params = new HashMap<>();
-        params.put(ResourceResolverFactory.SUBSERVICE, "readSystem");
+        try {
+            ResourceResolver resourceResolver = request.getResourceResolver();
+            Resource fileResource = resourceResolver.getResource(resourcePath + "/jcr:content");
 
-        try (ResourceResolver resourceResolver = resourceResolverFactory.getServiceResourceResolver(params)) {
-            // Fetch the resource from JCR
-            Resource resource = resourceResolver.getResource(path);
-            if (resource == null) {
-                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                response.getWriter().write("{\"error\":\"Resource not found at path: " + path + "\"}");
+            if (fileResource == null) {
+                LOGGER.error("File resource not found at path: {}", resourcePath);
+                response.setStatus(SlingHttpServletResponse.SC_NOT_FOUND);
                 return;
             }
 
-            // Convert file content to JSON format
-            ValueMap properties = resource.adaptTo(ValueMap.class);
-            if (properties != null) {
-                Map<String, Object> jsonMap = new HashMap<>();
-                properties.forEach(jsonMap::put);
-
-                // Write JSON to the response
-                response.setContentType("application/json");
-                response.setCharacterEncoding("UTF-8");
-                response.getWriter().write(new ObjectMapper().writeValueAsString(jsonMap));
-                LOGGER.debug("JSON response sent successfully.");
-            } else {
-                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                response.getWriter().write("{\"error\":\"Unable to adapt resource to ValueMap\"}");
+            Node fileNode = fileResource.adaptTo(Node.class);
+            if (fileNode == null || !fileNode.hasProperty("jcr:data")) {
+                LOGGER.error("File node or jcr:data property is missing");
+                response.setStatus(SlingHttpServletResponse.SC_NOT_FOUND);
+                return;
             }
+
+            Property fileDataProperty = fileNode.getProperty("jcr:data");
+            InputStream inputStream = fileDataProperty.getBinary().getStream();
+
+            List<Map<String, String>> jsonData = parseExcelToJson(inputStream);
+
+            Gson gson = new Gson();
+            String jsonOutput = gson.toJson(jsonData);
+
+            response.getWriter().write(jsonOutput);
+
         } catch (Exception e) {
-            LOGGER.error("Error occurred while processing the request: ", e);
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            response.getWriter().write("{\"error\":\"An unexpected error occurred\"}");
+            LOGGER.error("Error processing Excel file to JSON", e);
+            response.setStatus(SlingHttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
+
+    private List<Map<String, String>> parseExcelToJson(InputStream inputStream) throws Exception {
+        List<Map<String, String>> jsonData = new ArrayList<>();
+        try (Workbook workbook = new XSSFWorkbook(inputStream)) {
+            Sheet sheet = workbook.getSheetAt(0); // Read the first sheet
+            DataFormatter dataFormatter = new DataFormatter();
+            Iterator<Row> rowIterator = sheet.iterator();
+
+            List<String> headers = new ArrayList<>();
+
+            while (rowIterator.hasNext()) {
+                Row row = rowIterator.next();
+                Map<String, String> rowMap = new LinkedHashMap<>();
+
+                for (int i = 0; i < row.getLastCellNum(); i++) {
+                    Cell cell = row.getCell(i);
+                    String cellValue = dataFormatter.formatCellValue(cell);
+                    if (headers.isEmpty()) {
+                        headers.add(cellValue); // Assume first row as headers
+                    } else {
+                        rowMap.put(headers.get(i), cellValue);
+                    }
+                }
+
+                if (!rowMap.isEmpty()) {
+                    jsonData.add(rowMap);
+                }
+            }
+        }
+        return jsonData;
+    }
 }
-
-
-<sly data-sly-test="${tableManualVal.localRunMode == 'auth'}">
-    <div class="downloadTable">
-        <sly data-sly-use.jsonContent="${'java.net.URL' @ args='/bin/wm3dr/getTableFile?path=' + tableManualVal.path}">
-        </sly>
-        <pre>${jsonContent.openStream() @ context='json'}</pre>
-    </div>
-</sly>
-
-
-
-
-
