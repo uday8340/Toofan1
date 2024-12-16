@@ -107,3 +107,8 @@ public class ExcelToJsonServlet extends SlingAllMethodsServlet {
         return jsonData;
     }
 }
+
+
+
+
+GET http://localhost:4502/bin/custom/excel-to-json?resourcePath=/content/dam/my-project/data.xlsx
