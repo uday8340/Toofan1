@@ -1,114 +1,149 @@
 package com.example.core.servlets;
 
-import com.google.gson.Gson;
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import org.apache.commons.io.IOUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ResourceResolverFactory;
+import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.api.servlets.SlingAllMethodsServlet;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.jcr.Node;
-import javax.jcr.Property;
-import javax.jcr.RepositoryException;
 import javax.servlet.Servlet;
+import javax.servlet.ServletException;
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.Map;
 
 @Component(
     service = Servlet.class,
     property = {
-        "sling.servlet.methods=GET",
-        "sling.servlet.paths=/bin/custom/excel-to-json"
+        "sling.servlet.paths=/bin/wm3dr/getTableFile",
+        "sling.servlet.methods=GET"
     }
 )
-public class ExcelToJsonServlet extends SlingAllMethodsServlet {
+public class GetTableFile extends SlingAllMethodsServlet {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ExcelToJsonServlet.class);
+    private static final long serialVersionUID = 1L;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(GetTableFile.class);
+
+    @Reference
+    private ResourceResolverFactory resourceResolverFactory;
+
+    private static final String SUBSERVICE = "readSystem";
 
     @Override
-    protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response) {
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
+    protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response)
+            throws ServletException, IOException {
+        LOGGER.debug("******* GetTableFile Servlet Init ********");
 
-        String resourcePath = request.getParameter("resourcePath");
+        // Retrieve query parameters
+        String path = request.getParameter("path");
+        String filename = request.getParameter("name");
 
-        if (resourcePath == null || resourcePath.isEmpty()) {
-            LOGGER.error("Resource path is missing");
+        if (path == null || filename == null) {
             response.setStatus(SlingHttpServletResponse.SC_BAD_REQUEST);
+            response.getWriter().write("Missing required parameters: 'path' or 'name'.");
+            LOGGER.error("Missing parameters: 'path' or 'name'");
             return;
         }
 
-        try {
-            ResourceResolver resourceResolver = request.getResourceResolver();
-            Resource fileResource = resourceResolver.getResource(resourcePath + "/jcr:content");
+        LOGGER.debug("Table file path: {}", path);
+        LOGGER.debug("File name: {}", filename);
 
+        Map<String, Object> params = new HashMap<>();
+        params.put(ResourceResolverFactory.SUBSERVICE, SUBSERVICE);
+
+        try (ResourceResolver resourceResolver = resourceResolverFactory.getServiceResourceResolver(params)) {
+            // Fetch the resource from the JCR repository
+            Resource fileResource = resourceResolver.getResource(path.trim());
             if (fileResource == null) {
-                LOGGER.error("File resource not found at path: {}", resourcePath);
                 response.setStatus(SlingHttpServletResponse.SC_NOT_FOUND);
+                response.getWriter().write("File not found at path: " + path);
+                LOGGER.error("File not found at path: {}", path);
                 return;
             }
 
-            Node fileNode = fileResource.adaptTo(Node.class);
-            if (fileNode == null || !fileNode.hasProperty("jcr:data")) {
-                LOGGER.error("File node or jcr:data property is missing");
-                response.setStatus(SlingHttpServletResponse.SC_NOT_FOUND);
+            ValueMap contentProperties = fileResource.adaptTo(ValueMap.class);
+            if (contentProperties == null) {
+                response.setStatus(SlingHttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                response.getWriter().write("Failed to adapt resource to ValueMap.");
+                LOGGER.error("Failed to adapt resource to ValueMap at path: {}", path);
                 return;
             }
 
-            Property fileDataProperty = fileNode.getProperty("jcr:data");
-            InputStream inputStream = fileDataProperty.getBinary().getStream();
+            // Get file content
+            InputStream inputStream = contentProperties.get("jcr:data", InputStream.class);
+            if (inputStream == null) {
+                response.setStatus(SlingHttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                response.getWriter().write("File content is missing.");
+                LOGGER.error("File content is missing at path: {}", path);
+                return;
+            }
 
-            List<Map<String, String>> jsonData = parseExcelToJson(inputStream);
+            // Convert file content to JSON
+            JsonObject fileDataJson = convertFileContentToJson(inputStream);
+            if (fileDataJson == null) {
+                response.setStatus(SlingHttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                response.getWriter().write("Failed to process file content.");
+                LOGGER.error("Failed to process file content at path: {}", path);
+                return;
+            }
 
-            Gson gson = new Gson();
-            String jsonOutput = gson.toJson(jsonData);
-
-            response.getWriter().write(jsonOutput);
-
+            // Set JSON response
+            response.setContentType("application/json");
+            response.getWriter().write(fileDataJson.toString());
+            LOGGER.debug("File successfully converted to JSON and returned.");
         } catch (Exception e) {
-            LOGGER.error("Error processing Excel file to JSON", e);
+            LOGGER.error("Error in GetTableFile Servlet: ", e);
             response.setStatus(SlingHttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("Error occurred: " + e.getMessage());
         }
     }
 
-    private List<Map<String, String>> parseExcelToJson(InputStream inputStream) throws Exception {
-        List<Map<String, String>> jsonData = new ArrayList<>();
-        try (Workbook workbook = new XSSFWorkbook(inputStream)) {
-            Sheet sheet = workbook.getSheetAt(0); // Read the first sheet
-            DataFormatter dataFormatter = new DataFormatter();
-            Iterator<Row> rowIterator = sheet.iterator();
+    /**
+     * Converts the file content to a JSON structure.
+     * 
+     * @param inputStream the input stream of the file content
+     * @return a JsonObject representing the file data
+     */
+    private JsonObject convertFileContentToJson(InputStream inputStream) {
+        JsonObject jsonResult = new JsonObject();
+        JsonArray rows = new JsonArray();
 
-            List<String> headers = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+            String line;
+            int rowIndex = 0;
 
-            while (rowIterator.hasNext()) {
-                Row row = rowIterator.next();
-                Map<String, String> rowMap = new LinkedHashMap<>();
+            while ((line = reader.readLine()) != null) {
+                String[] columns = line.split(",");
+                JsonObject row = new JsonObject();
 
-                for (int i = 0; i < row.getLastCellNum(); i++) {
-                    Cell cell = row.getCell(i);
-                    String cellValue = dataFormatter.formatCellValue(cell);
-                    if (headers.isEmpty()) {
-                        headers.add(cellValue); // Assume first row as headers
-                    } else {
-                        rowMap.put(headers.get(i), cellValue);
-                    }
+                for (int i = 0; i < columns.length; i++) {
+                    row.addProperty("Column" + (i + 1), columns[i].trim());
                 }
 
-                if (!rowMap.isEmpty()) {
-                    jsonData.add(rowMap);
-                }
+                rows.add(row);
+                rowIndex++;
             }
+
+            jsonResult.add("rows", rows);
+            jsonResult.addProperty("totalRows", rowIndex);
+        } catch (IOException e) {
+            LOGGER.error("Error reading file content: ", e);
+            return null;
         }
-        return jsonData;
+
+        return jsonResult;
     }
 }
-
-
-
-
-GET http://localhost:4502/bin/custom/excel-to-json?resourcePath=/content/dam/my-project/data.xlsx
