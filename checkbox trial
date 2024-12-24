@@ -1,40 +1,45 @@
 (function (document, $) {
     "use strict";
 
-    // When the dialog is loaded
+    // Trigger when dialog content is loaded
     $(document).on("foundation-contentloaded", function (e) {
-        // Apply the handler to checkboxes within the dialog
-        checkboxShowHideHandler($(".cq-dialog-checkbox-showhide", e.target));
+        Coral.commons.ready(function () {
+            checkboxShowHideHandler($(".cq-dialog-checkbox-showhide", e.target));
+        });
     });
 
-    // When a checkbox is changed
-    $(document).on("change", ".cq-dialog-checkbox-showhide", function (e) {
-        checkboxShowHideHandler($(this));
+    // Trigger when a checkbox changes its state
+    $(document).on("change", ".cq-dialog-checkbox-showhide", function () {
+        if ($(this).closest('.coral3-Multifield').length > 0) {
+            checkboxShowHideHandler($(this));
+        }
     });
 
     function checkboxShowHideHandler(el) {
         el.each(function (i, element) {
             if ($(element).is("coral-checkbox")) {
                 Coral.commons.ready(element, function (component) {
-                    toggleVisibility(component, element);
+                    toggleCheckboxVisibility(element);
                     component.on("change", function () {
-                        toggleVisibility(component, element);
+                        toggleCheckboxVisibility(element);
                     });
                 });
             }
         });
     }
 
-    function toggleVisibility(component, element) {
-        // Find the target for the specific checkbox
-        let $multifieldItem = $(element).closest(".coral-Form-fieldwrapper"); // Locate the specific multifield entry
+    function toggleCheckboxVisibility(element) {
+        // Find the target selector for this checkbox
         let targetSelector = $(element).data("cqDialogCheckboxShowhideTarget");
+        let $multifieldItem = $(element).closest('.coral-Form-fieldwrapper'); // Scope to specific multifield entry
         let $target = $multifieldItem.find(targetSelector);
 
         if (targetSelector) {
-            $target.addClass("hide");
-            if (component.checked) {
+            // Add or remove the "hide" class based on checkbox state
+            if (element.checked) {
                 $target.removeClass("hide");
+            } else {
+                $target.addClass("hide");
             }
         }
     }
