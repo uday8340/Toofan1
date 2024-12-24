@@ -1,4 +1,22 @@
-// when dialog gets injected
+/**
+ * How to use:
+ *
+ * 1. Add class to checkbox
+ *
+ *		Example: granite:class="cq-dialog-checkbox-showhide"
+ *
+ * 2. Add cq-dialog-checkbox-showhide-target data-attribute to checkbox with the value being the selector to target for toggleing
+ *
+ *		Example: cq-dialog-checkbox-showhide-target=".togglefield"
+ *
+ * 3. Add target class to toggleable fields or components
+ *
+ *	    Example: granite:class="togglefield"
+ */
+(function (document, $) {
+    "use strict";
+
+    // when dialog gets injected
     $(document).on("foundation-contentloaded", function (e) {
         // if there is already an inital value make sure the according target element becomes visible
         checkboxShowHideHandler($(".cq-dialog-checkbox-showhide", e.target));
@@ -41,4 +59,5 @@
                 $target.removeClass("hide");
             }
         }
-}
+    }
+})(document, Granite.$);
