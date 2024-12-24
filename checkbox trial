@@ -1,20 +1,33 @@
 (function (document, $) {
     "use strict";
 
-    // when dialog gets injected
+    // When the dialog gets injected
     $(document).on("foundation-contentloaded", function (e) {
-        // if there is already an initial value make sure the according target element becomes visible
-        checkboxShowHideHandler($(".cq-dialog-checkbox-showhide", e.target));
+        // Handle the checkboxes inside the multifield
+        $(".cq-dialog-checkbox-showhide", e.target).each(function () {
+            checkboxShowHideHandler($(this));
+        });
     });
 
+    // Handle changes to the checkboxes
     $(document).on("change", ".cq-dialog-checkbox-showhide", function (e) {
         checkboxShowHideHandler($(this));
+    });
+
+    // Handle the addition of new fields in a multifield
+    $(document).on("click", ".coral-Button[data-action='add']", function (e) {
+        var multifield = $(this).closest(".coral-Multifield");
+        setTimeout(function () {
+            multifield.find(".cq-dialog-checkbox-showhide").each(function () {
+                checkboxShowHideHandler($(this));
+            });
+        }, 500); // Slight delay to ensure the new field is added
     });
 
     function checkboxShowHideHandler(el) {
         el.each(function (i, element) {
             if ($(element).is("coral-checkbox")) {
-                // handle Coral3 base checkbox
+                // Handle Coral3 base checkboxes
                 Coral.commons.ready(element, function (component) {
                     showHide(component, element);
                     component.on("change", function () {
@@ -22,7 +35,7 @@
                     });
                 });
             } else {
-                // handle Coral2 based checkbox
+                // Handle Coral2 based checkboxes
                 var component = $(element).data("checkbox");
                 if (component) {
                     showHide(component, element);
@@ -32,13 +45,10 @@
     }
 
     function showHide(component, element) {
-        // Find the closest multifield item for the specific checkbox
-        var $multifieldItem = $(element).closest(".coral-Multifield-item");
-        if ($multifieldItem.length === 0) return;
-
-        // Get the selector to find the target elements. It's stored as data-.. attribute
+        console.log("showing");
+        // Get the selector to find the target elements. It's stored as a data attribute
         var target = $(element).data("cqDialogCheckboxShowhideTarget");
-        var $target = $multifieldItem.find(target);
+        var $target = $(target);
 
         if (target) {
             $target.addClass("hide");
