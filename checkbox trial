@@ -3,58 +3,59 @@
 
     // When the dialog gets injected
     $(document).on("foundation-contentloaded", function (e) {
-        // Handle the checkboxes inside the multifield
-        $(".cq-dialog-checkbox-showhide", e.target).each(function () {
-            checkboxShowHideHandler($(this));
+        Coral.commons.ready(function () {
+            checkboxShowHideHandler($(".cq-dialog-checkbox-showhide", e.target));
         });
     });
 
-    // Handle changes to the checkboxes
-    $(document).on("change", ".cq-dialog-checkbox-showhide", function (e) {
-        checkboxShowHideHandler($(this));
-    });
-
-    // Handle the addition of new fields in a multifield
-    $(document).on("click", ".coral-Button[data-action='add']", function (e) {
-        var multifield = $(this).closest(".coral-Multifield");
-        setTimeout(function () {
-            multifield.find(".cq-dialog-checkbox-showhide").each(function () {
-                checkboxShowHideHandler($(this));
-            });
-        }, 500); // Slight delay to ensure the new field is added
+    // On checkbox state change
+    $(document).on("change", ".cq-dialog-checkbox-showhide", function () {
+        if ($(this).closest('.coral3-Multifield').length > 0) {
+            checkboxShowHideHandler($(this));
+        }
     });
 
     function checkboxShowHideHandler(el) {
         el.each(function (i, element) {
             if ($(element).is("coral-checkbox")) {
-                // Handle Coral3 base checkboxes
                 Coral.commons.ready(element, function (component) {
-                    showHide(component, $(element).closest(".coral-Multifield-item"));
+                    multiCheckboxShowHide(element);
                     component.on("change", function () {
-                        showHide(component, $(element).closest(".coral-Multifield-item"));
+                        multiCheckboxShowHide(element);
                     });
                 });
             } else {
-                // Handle Coral2 based checkboxes
-                var component = $(element).data("checkbox");
+                // Handle Coral2-based checkbox
+                let component = $(element).data("checkbox");
                 if (component) {
-                    showHide(component, $(element).closest(".coral-Multifield-item"));
+                    multiCheckboxShowHide(element);
                 }
             }
         });
     }
 
-    function showHide(component, multifieldItem) {
-        console.log("showing");
-        // Get the selector to find the target elements. It's stored as a data attribute
-        var target = $(component).attr("data-cq-dialog-checkbox-showhide-target");
-        var $target = multifieldItem.find(target); // Scope the target within the current multifield item
+    function multiCheckboxShowHide(element) {
+        let target = $(element).data("cqDialogCheckboxShowhideTarget");
+        let $target = $(target);
 
-        if ($target.length) {
-            $target.addClass("hide");
-            if (component.checked) {
-                $target.removeClass("hide");
-            }
+        if (target) {
+            $target.each(function () {
+                $(this).not(".hide").addClass("hide");
+                let filteredElements = [];
+                let targetValueList = $(this).data('showhidetargetvalue');
+                if (typeof targetValueList !== "undefined") {
+                    targetValueList.replace(/ /g, '').split(',').forEach((targetValue) => {
+                        let idfSelect = $(this).attr("class").split(' ').filter((item) => item !== "hide");
+                        let isChecked = $(this).parent()
+                            .find("coral-checkbox[data-cq-dialog-checkbox-showhide-target='." + idfSelect + "']")
+                            .prop('checked');
+                        if (isChecked) {
+                            filteredElements.push($(this));
+                        }
+                    });
+                    filteredElements.forEach(element => element.removeClass('hide'));
+                }
+            });
         }
     }
 })(document, Granite.$);
