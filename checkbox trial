@@ -29,28 +29,28 @@
             if ($(element).is("coral-checkbox")) {
                 // Handle Coral3 base checkboxes
                 Coral.commons.ready(element, function (component) {
-                    showHide(component, element);
+                    showHide(component, $(element).closest(".coral-Multifield-item"));
                     component.on("change", function () {
-                        showHide(component, element);
+                        showHide(component, $(element).closest(".coral-Multifield-item"));
                     });
                 });
             } else {
                 // Handle Coral2 based checkboxes
                 var component = $(element).data("checkbox");
                 if (component) {
-                    showHide(component, element);
+                    showHide(component, $(element).closest(".coral-Multifield-item"));
                 }
             }
         });
     }
 
-    function showHide(component, element) {
+    function showHide(component, multifieldItem) {
         console.log("showing");
         // Get the selector to find the target elements. It's stored as a data attribute
-        var target = $(element).data("cqDialogCheckboxShowhideTarget");
-        var $target = $(target);
+        var target = $(component).attr("data-cq-dialog-checkbox-showhide-target");
+        var $target = multifieldItem.find(target); // Scope the target within the current multifield item
 
-        if (target) {
+        if ($target.length) {
             $target.addClass("hide");
             if (component.checked) {
                 $target.removeClass("hide");
