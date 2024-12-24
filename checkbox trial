@@ -40,6 +40,8 @@
             // Remove 'hide' class if the checkbox is checked
             if (component.checked) {
                 $target.removeClass("hide");
+            } else {
+                $target.addClass("hide");
             }
         }
     }
