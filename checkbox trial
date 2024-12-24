@@ -1,7 +1,7 @@
 (function (document, $) {
     "use strict";
 
-    // When the dialog is loaded
+    // When dialog is loaded
     $(document).on("foundation-contentloaded", function (e) {
         // Apply the handler to checkboxes within the dialog
         checkboxShowHideHandler($(".cq-dialog-checkbox-showhide", e.target));
@@ -15,33 +15,33 @@
     function checkboxShowHideHandler(el) {
         el.each(function (i, element) {
             if ($(element).is("coral-checkbox")) {
+                // Handle Coral3 checkboxes
                 Coral.commons.ready(element, function (component) {
-                    toggleVisibility(component, element);
+                    showHide(component, element);
                     component.on("change", function () {
-                        toggleVisibility(component, element);
+                        showHide(component, element);
                     });
                 });
             }
         });
     }
 
-    function toggleVisibility(component, element) {
-        // Find the specific multifield item containing the checkbox
+    function showHide(component, element) {
+        // Locate the closest multifield item to scope the visibility toggle
         let $multifieldItem = $(element).closest(".coral-Multifield-item");
+        if (!$multifieldItem.length) {
+            // Fallback for non-multifield cases
+            $multifieldItem = $(element).closest(".coral-Form-fieldwrapper");
+        }
 
-        // Find the target for the specific checkbox within the multifield item
+        // Get the selector for the target element
         let targetSelector = $(element).data("cqDialogCheckboxShowhideTarget");
         let $target = $multifieldItem.find(targetSelector);
 
         if (targetSelector) {
-            // Add 'hide' class to the target by default
             $target.addClass("hide");
-
-            // Remove 'hide' class if the checkbox is checked
             if (component.checked) {
                 $target.removeClass("hide");
-            } else {
-                $target.addClass("hide");
             }
         }
     }
