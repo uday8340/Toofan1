@@ -1,12 +1,14 @@
 (function (document, $) {
     "use strict";
 
-    // When dialog gets injected
+    // When the dialog is loaded
     $(document).on("foundation-contentloaded", function (e) {
+        // Apply the handler to checkboxes within the dialog
         checkboxShowHideHandler($(".cq-dialog-checkbox-showhide", e.target));
     });
 
-    $(document).on("change", ".cq-dialog-checkbox-showhide", function () {
+    // When a checkbox is changed
+    $(document).on("change", ".cq-dialog-checkbox-showhide", function (e) {
         checkboxShowHideHandler($(this));
     });
 
@@ -14,55 +16,26 @@
         el.each(function (i, element) {
             if ($(element).is("coral-checkbox")) {
                 Coral.commons.ready(element, function (component) {
-                    showHide(component, element);
+                    toggleVisibility(component, element);
                     component.on("change", function () {
-                        showHide(component, element);
+                        toggleVisibility(component, element);
                     });
                 });
-            } else {
-                var component = $(element).data("checkbox");
-                if (component) {
-                    showHide(component, element);
-                }
             }
         });
     }
 
-    function showHide(component, element) {
-        var target = $(element).data("cqDialogCheckboxShowhideTarget");
-        var $target = $(target);
+    function toggleVisibility(component, element) {
+        // Find the target for the specific checkbox
+        let $multifieldItem = $(element).closest(".coral-Form-fieldwrapper"); // Locate the specific multifield entry
+        let targetSelector = $(element).data("cqDialogCheckboxShowhideTarget");
+        let $target = $multifieldItem.find(targetSelector);
 
-        if (target) {
+        if (targetSelector) {
             $target.addClass("hide");
             if (component.checked) {
                 $target.removeClass("hide");
             }
         }
     }
-
-    function checkboxShowHide(element) {
-        let target = $(element).data("cqDialogCheckboxShowhideTarget");
-        let $target = $(target);
-
-        if (target) {
-            $target.each(function () {
-                $(this).not(".hide").addClass("hide");
-
-                let showHideTargetValueList = $(this).data('showhidetargetvalue');
-                if (typeof showHideTargetValueList !== "undefined") {
-                    showHideTargetValueList.replace(/ /g, '').split(',').forEach((targetValue) => {
-                        let idfCheckbox = $(this).attr("class").split(' ').filter((item) => item !== "hide");
-                        let checkboxState = $(this).parent().find("coral-checkbox[data-cq-dialog-checkbox-showhide-target='." + idfCheckbox + "']")[0].checked;
-
-                        if (checkboxState && targetValue === "true") {
-                            $(this).removeClass('hide');
-                        } else {
-                            $(this).addClass('hide');
-                        }
-                    });
-                }
-            });
-        }
-    }
-
 })(document, Granite.$);
