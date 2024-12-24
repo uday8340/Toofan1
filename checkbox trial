@@ -11,33 +11,41 @@
         checkboxShowHideHandler($(this));
     });
 
+    // Handle newly added multifield items
+    $(document).on("click", ".cq-dialog-multifield-add", function () {
+        setTimeout(function () {
+            checkboxShowHideHandler($(".cq-dialog-checkbox-showhide"));
+        }, 500); // Small delay to ensure the new item is fully rendered
+    });
+
     function checkboxShowHideHandler(el) {
         el.each(function (i, element) {
-            if ($(element).is("coral-checkbox")) {
+            const $element = $(element);
+
+            if ($element.is("coral-checkbox")) {
                 Coral.commons.ready(element, function (component) {
-                    // Handle initial visibility
-                    toggleVisibility(component, element);
+                    toggleVisibility(component, $element);
 
                     // Attach event listener for changes
                     component.on("change", function () {
-                        toggleVisibility(component, element);
+                        toggleVisibility(component, $element);
                     });
                 });
             }
         });
     }
 
-    function toggleVisibility(component, element) {
+    function toggleVisibility(component, $element) {
         // Get the selector for the target field
-        var target = $(element).data("cqDialogCheckboxShowhideTarget");
-        var $target = $(target);
+        const target = $element.data("cqDialogCheckboxShowhideTarget");
+        const $target = $element.closest(".coral-Form-fieldwrapper").find(target);
 
         if (target) {
             if (component.checked) {
-                // Show the target field if checkbox is checked
+                // Show the target field if the checkbox is checked
                 $target.removeClass("hide");
             } else {
-                // Hide the target field if checkbox is unchecked
+                // Hide the target field if the checkbox is unchecked
                 $target.addClass("hide");
             }
         }
