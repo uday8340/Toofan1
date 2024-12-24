@@ -8,7 +8,7 @@
     });
 
     // When a checkbox is changed
-    $(document).on("change", ".cq-dialog-checkbox-showhide", function (e) {
+    $(document).on("change", ".cq-dialog-checkbox-showhide", function () {
         checkboxShowHideHandler($(this));
     });
 
@@ -26,15 +26,18 @@
     }
 
     function toggleVisibility(component, element) {
-        // Find the target for the specific checkbox
-        let $multifieldItem = $(element).closest(".coral-Form-fieldwrapper"); // Locate the specific multifield entry
-        let targetSelector = $(element).data("cqDialogCheckboxShowhideTarget");
+        // Locate the specific multifield entry
+        let $multifieldItem = $(element).closest(".coral-Multifield-item"); 
+        // Find the target selector for the specific checkbox
+        let targetSelector = $(element).data("cqDialogCheckboxShowhideTarget"); 
         let $target = $multifieldItem.find(targetSelector);
 
-        if (targetSelector) {
-            $target.addClass("hide");
+        if (targetSelector && $target.length > 0) {
+            // Add or remove the 'hide' class based on the checkbox state
             if (component.checked) {
                 $target.removeClass("hide");
+            } else {
+                $target.addClass("hide");
             }
         }
     }
