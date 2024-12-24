@@ -3,23 +3,18 @@
 
     // when dialog gets injected
     $(document).on("foundation-contentloaded", function (e) {
-        // Only target checkboxes that are not within multifield items
-        checkboxShowHideHandler($(".cq-dialog-checkbox-showhide", e.target).filter(function () {
-            return $(this).closest(".cq-dialog-multifield").length === 0;
-        }));
+        // if there is already an initial value make sure the according target element becomes visible
+        checkboxShowHideHandler($(".cq-dialog-checkbox-showhide", e.target));
     });
 
     $(document).on("change", ".cq-dialog-checkbox-showhide", function (e) {
-        // Only trigger the handler for checkboxes not within multifield items
-        if ($(this).closest(".cq-dialog-multifield").length === 0) {
-            checkboxShowHideHandler($(this));
-        }
+        checkboxShowHideHandler($(this));
     });
 
     function checkboxShowHideHandler(el) {
         el.each(function (i, element) {
             if ($(element).is("coral-checkbox")) {
-                // handle Coral3 base drop-down
+                // handle Coral3 base checkbox
                 Coral.commons.ready(element, function (component) {
                     showHide(component, element);
                     component.on("change", function () {
@@ -27,7 +22,7 @@
                     });
                 });
             } else {
-                // handle Coral2 based drop-down
+                // handle Coral2 based checkbox
                 var component = $(element).data("checkbox");
                 if (component) {
                     showHide(component, element);
@@ -37,10 +32,13 @@
     }
 
     function showHide(component, element) {
-        console.log('showing');
-        // get the selector to find the target elements. its stored as data-.. attribute
+        // Find the closest multifield item for the specific checkbox
+        var $multifieldItem = $(element).closest(".coral-Multifield-item");
+        if ($multifieldItem.length === 0) return;
+
+        // Get the selector to find the target elements. It's stored as data-.. attribute
         var target = $(element).data("cqDialogCheckboxShowhideTarget");
-        var $target = $(target);
+        var $target = $multifieldItem.find(target);
 
         if (target) {
             $target.addClass("hide");
