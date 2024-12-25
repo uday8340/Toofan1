@@ -46,3 +46,8 @@
         }
     }
 })(document, Granite.$);
+
+
+
+
+$(element).nextAll(targetSelector).first();
