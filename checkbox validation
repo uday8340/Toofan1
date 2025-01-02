@@ -50,7 +50,7 @@
         console.log('showing');
         // get the selector to find the target elements. its stored as data-.. attribute
         var target = $(element).data("cqDialogCheckboxShowhideTarget");
-        var $target = $(target);
+        var $target = $(element).nextAll(target).first();
 
 
         if (target) {
