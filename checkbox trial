@@ -51,3 +51,57 @@
 
 
 $(element).nextAll(targetSelector).first();
+
+
+
+
+
+(function (document, $) {
+    "use strict";
+
+    // When the dialog is loaded
+    $(document).on("foundation-contentloaded", function (e) {
+        // Ensure the target element visibility matches the checkbox state
+        checkboxShowHideHandler($(".cq-dialog-checkbox-showhide", e.target));
+    });
+
+    // When a checkbox changes state
+    $(document).on("change", ".cq-dialog-checkbox-showhide", function (e) {
+        checkboxShowHideHandler($(this));
+    });
+
+    function checkboxShowHideHandler(el) {
+        el.each(function (i, element) {
+            if ($(element).is("coral-checkbox")) {
+                // Handle Coral3 base checkboxes
+                Coral.commons.ready(element, function (component) {
+                    showHide(component, element);
+                    component.on("change", function () {
+                        showHide(component, element);
+                    });
+                });
+            } else {
+                // Handle Coral2 base checkboxes
+                var component = $(element).data("checkbox");
+                if (component) {
+                    showHide(component, element);
+                }
+            }
+        });
+    }
+
+    function showHide(component, element) {
+        console.log('Toggling visibility');
+        // Get the selector for the target element
+        var target = $(element).data("cqDialogCheckboxShowhideTarget");
+        var $target = $(element).nextAll(target).first();
+
+        if (target) {
+            $target.removeClass("hide"); // Ensure the field is visible by default
+            if (component.checked) {
+                $target.addClass("hide"); // Hide when checkbox is checked
+            }
+        }
+    }
+})(document, Granite.$);
+
