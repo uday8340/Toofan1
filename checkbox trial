@@ -105,3 +105,8 @@ $(element).nextAll(targetSelector).first();
     }
 })(document, Granite.$);
 
+
+
+
+https://adapttoaem.blogspot.com/2021/02/aem-hideshow-touch-ui-dialog-fields.html
+
