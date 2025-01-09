@@ -1,0 +1,25 @@
+ @Value("${chartbook.config.nas-folder-path}")
+    private String nasFolderPath;
+
+    public String getFileContent(String fileName) {
+        Path filePath = Paths.get(nasFolderPath, fileName);
+
+        if (!Files.exists(filePath)) {
+            throw new FileNotFoundException("File not found: " + fileName);
+        }
+
+        try {
+            return Files.readString(filePath);
+        } catch (IOException e) {
+            throw new RuntimeException("Error reading file: " + fileName, e);
+        }
+    }
+
+  @Autowired
+    private ChartbookService chartbookService;
+
+    @GetMapping("/file")
+    public ResponseEntity<String> getFileContent(@RequestParam String fileName) {
+        String jsonResponse = chartbookService.getFileContent(fileName);
+        return ResponseEntity.ok(jsonResponse);
+    }
