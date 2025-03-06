@@ -1,0 +1,104 @@
+package com.ms.wealthbook.core.servlets;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ms.wealthbook.core.models.TopNavMenu;
+import com.ms.wealthbook.core.service.SessionHandlerService;
+import com.ms.wealthbook.core.utils.Constants;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.sling.api.SlingHttpServletRequest;
+import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.servlets.SlingSafeMethodsServlet;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.propertytypes.ServiceDescription;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.servlet.Servlet;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+@Component(service = Servlet.class,
+        property = {
+                "sling.servlet.resourceTypes=wealthbookcms/components/topnav",
+                "sling.servlet.extensions=json",
+                "sling.servlet.methods=GET"
+        })
+@ServiceDescription("Servlet to fetch Top Navigation Menu")
+public class TopNavigationServlet extends SlingSafeMethodsServlet {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TopNavigationServlet.class);
+
+    @Reference
+    private SessionHandlerService sessionHandlerService;
+
+    @Override
+    protected void doGet(final SlingHttpServletRequest req, final SlingHttpServletResponse resp) throws IOException {
+        LOGGER.info("Executing Wealth Book Top Navigation Creation Process...");
+        Map<String, TopNavMenu> topNavFinalMap = new HashMap<>();
+
+        try (ResourceResolver resourceResolver = sessionHandlerService.getResourceResolver()) {
+            String payload = req.getParameter("payload");
+            if (StringUtils.isNotEmpty(payload)) {
+                LOGGER.info("Payload: {}", payload);
+                TopNavMenu topNavMenu = processPayload(resourceResolver.getResource(payload), resourceResolver);
+                topNavFinalMap.put("nav", topNavMenu);
+            }
+
+            ObjectMapper objectMapper = new ObjectMapper();
+            String strTopNavigationJson = objectMapper.writeValueAsString(topNavFinalMap);
+
+            resp.setContentType(Constants.APPLICATION_JSON);
+            resp.getWriter().write(strTopNavigationJson);
+        } catch (Exception e) {
+            LOGGER.error("Exception while creating Top Navigation: {}", e.getMessage(), e);
+        }
+    }
+
+    protected TopNavMenu processPayload(Resource resource, ResourceResolver resourceResolver) {
+        LOGGER.info("Entering processPayload");
+        TopNavMenu topNavMenu = null;
+
+        if (resource != null) {
+            String parentResourceStr = resource.getPath() + Constants.TOP_NAV_JCR_PATH;
+            Resource parentResource = resourceResolver.getResource(parentResourceStr);
+            if (parentResource != null) {
+                topNavMenu = createTopNavMenu(parentResource);
+                processChildren(resource, topNavMenu, resourceResolver);
+            }
+        }
+
+        LOGGER.info("Exiting processPayload");
+        return topNavMenu;
+    }
+
+    private void processChildren(Resource resource, TopNavMenu parentMenu, ResourceResolver resourceResolver) {
+        for (Resource child : resource.getChildren()) {
+            if (Constants.CO_PAGE.equals(child.getValueMap().get("type", String.class))) {
+                String childResourceStr = child.getPath() + Constants.TOP_NAV_JCR_PATH;
+                Resource childResource = resourceResolver.getResource(childResourceStr);
+                if (childResource != null) {
+                    TopNavMenu childMenu = createTopNavMenu(childResource);
+                    parentMenu.addChild(childMenu);
+                    processChildren(child, childMenu, resourceResolver);
+                }
+            }
+        }
+    }
+
+    private TopNavMenu createTopNavMenu(Resource resource) {
+        TopNavMenu topNavMenu = new TopNavMenu();
+        topNavMenu.setTitle(resource.getValueMap().get("title", String.class));
+        topNavMenu.setTooltip(resource.getValueMap().get("tooltip", String.class));
+        topNavMenu.setIsActive(resource.getValueMap().get("isActive", Boolean.class));
+        topNavMenu.setLink(resource.getValueMap().get("link", String.class));
+        topNavMenu.setTarget(resource.getValueMap().get("target", String.class));
+        topNavMenu.setTileImage(resource.getValueMap().get("tileImage", String.class));
+        topNavMenu.setBannerImage(resource.getValueMap().get("bannerImage", String.class));
+        topNavMenu.setDescription(resource.getValueMap().get("description", String.class));
+        return topNavMenu;
+    }
+}
