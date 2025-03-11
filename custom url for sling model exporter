@@ -1,0 +1,47 @@
+Approach 1: Using @Exporter Annotation (Recommended)
+
+@Model(adaptables = Resource.class, adapters = {MyComponent.class, ComponentExporter.class}, resourceType = "myproject/components/content/mycomponent")
+@Exporter(name = "jackson", extensions = "json")
+public class MyComponent implements ComponentExporter {
+
+    @Inject
+    private String title;
+
+    public String getTitle() {
+        return title;
+    }
+
+    @Override
+    public String getExportedType() {
+        return "myproject/components/content/mycomponent";
+    }
+}
+
+Approach 2: Custom URL Mapping (Via Servlet/Filter)
+  
+@Component(service = {Servlet.class}, 
+           property = {
+               "sling.servlet.paths=/bin/mycustomurl",
+               "sling.servlet.extensions=json",
+               "sling.servlet.methods=GET"
+           })
+public class MyCustomUrlServlet extends SlingSafeMethodsServlet {
+
+    @Reference
+    private ResourceResolverFactory resolverFactory;
+
+    @Override
+    protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response) throws IOException {
+        ResourceResolver resolver = request.getResourceResolver();
+        Resource resource = resolver.getResource("/content/my-site/my-page/jcr:content/root/mycomponent");
+
+        if (resource != null) {
+            ComponentExporter exporter = resource.adaptTo(ComponentExporter.class);
+            if (exporter != null) {
+                String jsonOutput = new ObjectMapper().writeValueAsString(exporter);
+                response.setContentType("application/json");
+                response.getWriter().write(jsonOutput);
+            }
+        }
+    }
+}
