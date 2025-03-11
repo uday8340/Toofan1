@@ -45,3 +45,32 @@ public class MyCustomUrlServlet extends SlingSafeMethodsServlet {
         }
     }
 }
+
+
+
+
+@Component(service = {Servlet.class},
+        property = {
+                "sling.servlet.paths=/bin/simplejson",
+                "sling.servlet.extensions=json",
+                "sling.servlet.methods=GET"
+        })
+public class SimpleJsonServlet extends SlingSafeMethodsServlet {
+
+    @Override
+    protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response) throws IOException {
+        Resource resource = request.getResourceResolver().getResource("/content/my-site/my-page/jcr:content/root/mycomponent");
+
+        if (resource != null) {
+            ValueMap properties = resource.getValueMap();
+            Map<String, Object> jsonResponse = new HashMap<>(properties);
+
+            response.setContentType("application/json");
+            response.getWriter().write(new ObjectMapper().writeValueAsString(jsonResponse)); // Using Jackson
+        } else {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            response.getWriter().write("{\"error\":\"Resource not found\"}");
+        }
+    }
+}
+
