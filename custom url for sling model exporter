@@ -111,6 +111,73 @@ public class MyCustomUrlServlet extends SlingSafeMethodsServlet {
             response.getWriter().write("{\"error\":\"Resource not found\"}");
         }
     }
+
+workfloe Servlet
+
+package com.example.core.servlets;
+
+import com.adobe.granite.ui.components.Config;
+import com.adobe.granite.ui.components.JsonItem;
+import com.adobe.granite.ui.components.Tag;
+import com.google.gson.Gson;
+import org.apache.sling.api.SlingHttpServletRequest;
+import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.servlets.SlingAllMethodsServlet;
+import org.apache.sling.models.factory.ModelFactory;
+import org.apache.sling.models.factory.MissingElementsException;
+import org.apache.sling.models.factory.PostConstructException;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+
+import javax.servlet.Servlet;
+import javax.servlet.ServletException;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+@Component(
+    service = Servlet.class,
+    property = {
+        "sling.servlet.paths=/bin/wealthbook/export",
+        "sling.servlet.methods=GET"
+    }
+)
+public class WealthbookJsonExportServlet extends SlingAllMethodsServlet {
+
+    @Reference
+    private ModelFactory modelFactory;
+
+    private static final Gson GSON = new Gson();
+
+    @Override
+    protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response) throws ServletException, IOException {
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+
+        String resourcePath = request.getParameter("path");
+        if (resourcePath == null || resourcePath.isEmpty()) {
+            response.setStatus(SlingHttpServletResponse.SC_BAD_REQUEST);
+            response.getWriter().write("{\"error\": \"Missing 'path' parameter\"}");
+            return;
+        }
+
+        Map<String, Object> jsonResponse = new HashMap<>();
+        try {
+            request.getRequestDispatcher(resourcePath).include(request, response);
+            Object componentModel = modelFactory.createModel(request.getResource(), Object.class);
+
+            jsonResponse.put("path", resourcePath);
+            jsonResponse.put("data", componentModel);
+
+            response.getWriter().write(GSON.toJson(jsonResponse));
+
+        } catch (PostConstructException | MissingElementsException e) {
+            response.setStatus(SlingHttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("{\"error\": \"Failed to export component\"}");
+        }
+    }
+}
+
 }
 
 
