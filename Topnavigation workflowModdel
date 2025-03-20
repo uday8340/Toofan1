@@ -1,0 +1,75 @@
+package com.ms.wealthbook.core.workflow;
+
+import com.ms.wealthbook.core.service.SessionHanlderService;
+import com.ms.wealthbook.core.utils.Constants;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.servlets.HttpConstants;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.propertytypes.ServiceDescription;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import com.adobe.granite.workflow.WorkflowSession;
+import com.adobe.granite.workflow.exec.WorkflowProcess;
+import com.adobe.granite.workflow.exec.WorkItem;
+import com.adobe.granite.workflow.exec.WorkflowData;
+import com.adobe.granite.workflow.metadata.MetaDataMap;
+
+import javax.jcr.Node;
+import javax.jcr.Session;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+@Component(
+    service = WorkflowProcess.class,
+    property = {
+        "process.label=Top Navigation Workflow Step"
+    }
+)
+@ServiceDescription("Custom workflow step to trigger Top Navigation Servlet")
+public class TopNavigationWorkflowProcess implements WorkflowProcess {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TopNavigationWorkflowProcess.class);
+
+    private static final String SERVLET_URL = "http://localhost:4502/bin/wealthbookcms/get/topNavigation.json?payload=";
+
+    @Reference
+    private SessionHanlderService sessionHanlderService;
+
+    @Override
+    public void execute(WorkItem workItem, WorkflowSession workflowSession, MetaDataMap metaDataMap) {
+        try {
+            LOGGER.info("Executing Top Navigation Workflow Process Step...");
+
+            // Get payload path from workflow data
+            WorkflowData workflowData = workItem.getWorkflowData();
+            String payloadPath = (String) workflowData.getPayload();
+            
+            if (StringUtils.isNotEmpty(payloadPath)) {
+                LOGGER.info("Payload Path: {}", payloadPath);
+
+                // Construct servlet URL
+                String servletCallUrl = SERVLET_URL + payloadPath;
+                LOGGER.info("Calling Servlet: {}", servletCallUrl);
+
+                // Call Servlet using HTTP GET
+                URL url = new URL(servletCallUrl);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod(HttpConstants.METHOD_GET);
+                conn.setRequestProperty("Content-Type", Constants.APPLICATION_JSON);
+                int responseCode = conn.getResponseCode();
+
+                if (responseCode == 200) {
+                    LOGGER.info("Top Navigation Servlet executed successfully.");
+                } else {
+                    LOGGER.error("Failed to execute servlet. Response Code: {}", responseCode);
+                }
+            } else {
+                LOGGER.error("Invalid payload path.");
+            }
+        } catch (Exception e) {
+            LOGGER.error("Exception in Top Navigation Workflow Process Step: {}", e.getMessage(), e);
+        }
+    }
+}
