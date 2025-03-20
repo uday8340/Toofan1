@@ -66,3 +66,91 @@ public class CommonConfigWorkflowProcess implements WorkflowProcess {
         }
     }
 }
+...........................................................................................................................................................
+
+package com.example.core.workflow;
+
+import com.day.cq.workflow.WorkflowException;
+import com.day.cq.workflow.WorkflowSession;
+import com.day.cq.workflow.exec.WorkItem;
+import com.day.cq.workflow.exec.WorkflowProcess;
+import com.day.cq.workflow.metadata.MetaDataMap;
+import org.apache.sling.api.resource.*;
+import org.json.JSONObject;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import com.example.core.services.HttpPostService;
+
+@Component(
+    service = WorkflowProcess.class,
+    property = {"process.label=Check Template and Post Data"}
+)
+public class CommonConfigWorkflowProcess implements WorkflowProcess {
+
+    private static final Logger LOG = LoggerFactory.getLogger(CommonConfigWorkflowProcess.class);
+
+    @Reference
+    private HttpPostService httpPostService;
+
+    @Reference
+    private ResourceResolverFactory resourceResolverFactory;
+
+    @Override
+    public void execute(WorkItem workItem, WorkflowSession workflowSession, MetaDataMap metaDataMap) 
+            throws WorkflowException {
+        
+        String payloadPath = workItem.getWorkflowData().getPayload().toString();
+        LOG.info("Processing workflow for payload: {}", payloadPath);
+
+        // Obtain a resource resolver
+        try (ResourceResolver resourceResolver = resourceResolverFactory.getServiceResourceResolver(
+                Collections.singletonMap(ResourceResolverFactory.SUBSERVICE, "workflow-service"))) {
+            
+            Resource resource = resourceResolver.getResource(payloadPath);
+            if (resource == null) {
+                LOG.error("Resource not found at {}", payloadPath);
+                throw new WorkflowException("Resource not found at " + payloadPath);
+            }
+
+            // Get template path from JCR
+            ValueMap valueMap = resource.getValueMap();
+            String templatePath = valueMap.get("cq:template", "");
+            if (templatePath == null) {
+                LOG.warn("No cq:template found at {}", payloadPath);
+                return;
+            }
+
+            if ("/conf/wealthbook/templates/common-configuration".equals(templatePath)) {
+                LOG.info("Template matched: {}", templatePath);
+
+                // Extract relevant data from JCR
+                String title = valueMap.get("jcr:title", "");
+                String description = valueMap.get("jcr:description", "");
+
+                // Convert data to JSON
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("title", title);
+                jsonObject.put("description", description);
+
+                // Send JSON via HTTP POST
+                boolean success = httpPostService.sendPostRequest(jsonObject.toString());
+                if (success) {
+                    LOG.info("API call successful for {}", payloadPath);
+                } else {
+                    LOG.error("API call failed for {}", payloadPath);
+                    throw new WorkflowException("Failed to send data to external API");
+                }
+            } else {
+                LOG.info("Template does not match, skipping.");
+            }
+        } catch (LoginException e) {
+            LOG.error("Unable to get service resource resolver", e);
+            throw new WorkflowException("Service resource resolver acquisition failed", e);
+        } catch (Exception e) {
+            LOG.error("Error processing workflow", e);
+            throw new WorkflowException("Unexpected error in workflow execution", e);
+        }
+    }
+}
