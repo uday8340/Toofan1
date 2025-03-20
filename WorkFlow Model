@@ -1,5 +1,8 @@
 package com.aem.geeks.core.servlets;
 
+conn.setRequestProperty("Authorization", "Basic YWRtaW46YWRtaW4=");
+
+
 import com.adobe.granite.workflow.WorkflowSession;
 import com.adobe.granite.workflow.exec.WorkflowData;
 import com.adobe.granite.workflow.model.WorkflowModel;
