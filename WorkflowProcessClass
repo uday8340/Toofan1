@@ -1,0 +1,68 @@
+package com.example.core.workflow;
+
+import com.day.cq.workflow.WorkflowException;
+import com.day.cq.workflow.WorkflowSession;
+import com.day.cq.workflow.exec.WorkItem;
+import com.day.cq.workflow.exec.WorkflowProcess;
+import com.day.cq.workflow.metadata.MetaDataMap;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ValueMap;
+import org.json.JSONObject;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import com.example.core.services.HttpPostService;
+
+@Component(
+    service = WorkflowProcess.class,
+    property = {
+        "process.label=Check Template and Post Data"
+    }
+)
+public class CommonConfigWorkflowProcess implements WorkflowProcess {
+
+    private static final Logger LOG = LoggerFactory.getLogger(CommonConfigWorkflowProcess.class);
+
+    @Reference
+    private HttpPostService httpPostService;
+
+    @Override
+    public void execute(WorkItem workItem, WorkflowSession workflowSession, MetaDataMap metaDataMap) throws WorkflowException {
+        String payloadPath = workItem.getWorkflowData().getPayload().toString();
+        LOG.info("Processing workflow for payload: {}", payloadPath);
+
+        try (ResourceResolver resourceResolver = workflowSession.adaptTo(ResourceResolver.class)) {
+            Resource resource = resourceResolver.getResource(payloadPath);
+            if (resource == null) {
+                LOG.error("Resource not found at {}", payloadPath);
+                return;
+            }
+
+            // Get template path from JCR
+            ValueMap valueMap = resource.getValueMap();
+            String templatePath = valueMap.get("cq:template", String.class);
+
+            if ("/conf/wealthbook/templates/common-configuration".equals(templatePath)) {
+                LOG.info("Template matched: {}", templatePath);
+
+                // Extract relevant data from JCR
+                String title = valueMap.get("jcr:title", "");
+                String description = valueMap.get("jcr:description", "");
+
+                // Convert data to JSON
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("title", title);
+                jsonObject.put("description", description);
+
+                // Send JSON via HTTP POST
+                httpPostService.sendPostRequest(jsonObject.toString());
+            } else {
+                LOG.info("Template does not match, skipping.");
+            }
+        } catch (Exception e) {
+            LOG.error("Error processing workflow", e);
+        }
+    }
+}
