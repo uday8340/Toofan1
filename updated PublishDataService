@@ -1,0 +1,91 @@
+package com.ms.wealthbook.core.service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ms.wealthbook.core.models.TopNavMenu;
+import com.ms.wealthbook.core.utils.Constants;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ValueMap;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+@Component(service = PublishDataService.class)
+public class PublishDataService {
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(PublishDataService.class);
+    
+    @Reference
+    private SessionHanlderService sessionHanlderService;
+    
+    public String getTopNavigationJson(String payload) {
+        LOGGER.info("Fetching Top Navigation JSON for payload: {}", payload);
+        Map<String, TopNavMenu> topNavFinalMap = new HashMap<>();
+        
+        try (ResourceResolver resourceResolver = sessionHanlderService.getResourceResolver()) {
+            if (StringUtils.isNotEmpty(payload)) {
+                TopNavMenu topNavMenu = processPayload(resourceResolver.getResource(payload), resourceResolver);
+                topNavFinalMap.put("nav", topNavMenu);
+            }
+            
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.writeValueAsString(topNavFinalMap);
+        } catch (Exception e) {
+            LOGGER.error("Error generating Top Navigation JSON: {}", e.getMessage(), e);
+        }
+        return "{}";
+    }
+
+    private TopNavMenu processPayload(Resource resource, ResourceResolver resourceResolver) {
+        LOGGER.info("Processing payload...");
+        TopNavMenu topNavMenu = null;
+        if (resource != null) {
+            String parentResourceStr = resource.getPath() + Constants.TOP_NAV_JCR_PATH;
+            Resource parentResource = resourceResolver.getResource(parentResourceStr);
+            
+            if (parentResource != null) {
+                topNavMenu = createTopNavMenu(parentResource);
+                processChildren(resource, topNavMenu, resourceResolver);
+            }
+        }
+        return topNavMenu;
+    }
+
+    private void processChildren(Resource resource, TopNavMenu parentMenu, ResourceResolver resourceResolver) {
+        for (Resource child : resource.getChildren()) {
+            if (child.getValueMap().containsKey(Constants.CQ_PAGE)) {
+                String childResourceStr = child.getPath() + Constants.TOP_NAV_JCR_PATH;
+                Resource childResource = resourceResolver.getResource(childResourceStr);
+                
+                if (childResource != null) {
+                    TopNavMenu childMenu = createTopNavMenu(childResource);
+                    parentMenu.addChild(childMenu);
+                    processChildren(child, childMenu, resourceResolver);
+                }
+            }
+        }
+    }
+
+    private TopNavMenu createTopNavMenu(Resource resource) {
+        TopNavMenu topNavMenu = new TopNavMenu();
+        ValueMap properties = resource.getValueMap();
+        
+        topNavMenu.setTitle(properties.get("title", String.class));
+        topNavMenu.setTooltip(properties.get("tooltip", String.class));
+        topNavMenu.setIsActive(properties.get("isActive", Boolean.class));
+        topNavMenu.setAddBottomSeparator(properties.get("addBottomSeparator", Boolean.class));
+        topNavMenu.setLink(properties.get("link", String.class));
+        topNavMenu.setTarget(properties.get("target", String.class));
+        topNavMenu.setTileImage(properties.get("tileImage", String.class));
+        topNavMenu.setBannerImage(properties.get("bannerImage", String.class));
+        topNavMenu.setDescription(properties.get("description", String.class));
+        
+        return topNavMenu;
+    }
+}
