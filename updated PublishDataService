@@ -89,3 +89,90 @@ public class PublishDataService {
         return topNavMenu;
     }
 }
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+package com.example.core.services.impl;
+
+import com.example.core.models.TopNavMenu;
+import com.google.gson.Gson;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ResourceResolverFactory;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+
+@Component(service = PublishDataService.class, immediate = true)
+public class PublishDataService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(PublishDataService.class);
+
+    @Reference
+    private ResourceResolverFactory resourceResolverFactory;
+
+    private ResourceResolver resourceResolver;
+    private final Gson gson = new Gson();
+
+    @Activate
+    protected void activate() {
+        try {
+            Map<String, Object> authInfo = new HashMap<>();
+            authInfo.put(ResourceResolverFactory.SUBSERVICE, "dataServiceUser");
+
+            resourceResolver = resourceResolverFactory.getServiceResourceResolver(authInfo);
+            LOGGER.info("Successfully obtained a service resource resolver.");
+        } catch (Exception e) {
+            LOGGER.error("Error obtaining resource resolver: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Fetches the top navigation JSON data for a given path.
+     *
+     * @param path the JCR path to fetch navigation data from.
+     * @return JSON representation of the top navigation data.
+     */
+    public String getTopNavigationJson(String path) {
+        LOGGER.info("Fetching Top Navigation JSON for path: {}", path);
+
+        if (resourceResolver == null) {
+            LOGGER.error("Resource Resolver is null! Cannot fetch navigation.");
+            return "{}";
+        }
+
+        Resource resource = resourceResolver.getResource(path);
+        if (resource == null) {
+            LOGGER.warn("No resource found at path: {}", path);
+            return "{}";
+        }
+
+        TopNavMenu topNavMenu = resource.adaptTo(TopNavMenu.class);
+        if (topNavMenu == null) {
+            LOGGER.warn("Failed to adapt resource to TopNavMenu model.");
+            return "{}";
+        }
+
+        // Log the child navigation details
+        List<TopNavMenu> childNav = topNavMenu.getChildNav();
+        if (childNav == null || childNav.isEmpty()) {
+            LOGGER.warn("Child navigation is null or empty for path: {}", path);
+        } else {
+            LOGGER.info("Child navigation items found: {}", childNav.size());
+        }
+
+        String jsonResponse = gson.toJson(topNavMenu);
+        LOGGER.info("Generated Navigation JSON: {}", jsonResponse);
+
+        return jsonResponse;
+    }
+}
