@@ -1,0 +1,80 @@
+package com.ms.wealthbook.core.servlets;
+
+import com.ms.wealthbook.core.service.PublishDataService;
+import com.ms.wealthbook.core.utils.Constants;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.sling.api.SlingHttpServletRequest;
+import org.apache.sling.api.SlingHttpServletResponse;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+import org.mockito.runners.MockitoJUnitRunner;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
+import static org.mockito.Mockito.*;
+import static org.junit.Assert.*;
+
+@RunWith(MockitoJUnitRunner.class)
+public class TopNavigationServletTest {
+
+    @InjectMocks
+    private TopNavigationServlet topNavigationServlet;
+
+    @Mock
+    private PublishDataService publishDataService;
+
+    @Mock
+    private SlingHttpServletRequest request;
+
+    @Mock
+    private SlingHttpServletResponse response;
+
+    private StringWriter responseWriter;
+    private PrintWriter printWriter;
+
+    @Before
+    public void setUp() throws Exception {
+        MockitoAnnotations.initMocks(this);
+        responseWriter = new StringWriter();
+        printWriter = new PrintWriter(responseWriter);
+        when(response.getWriter()).thenReturn(printWriter);
+    }
+
+    @Test
+    public void testDoGet_WithValidPayload() throws Exception {
+        String payload = "/content/test";
+        String expectedJson = "{\"nav\":{\"title\":\"Home\"}}";
+
+        when(request.getParameter("path")).thenReturn(payload);
+        when(publishDataService.getTopNavigationJson(payload)).thenReturn(expectedJson);
+
+        topNavigationServlet.doGet(request, response);
+
+        printWriter.flush();
+        assertTrue(responseWriter.toString().contains("Home"));
+    }
+
+    @Test
+    public void testDoGet_WithEmptyPayload() throws Exception {
+        when(request.getParameter("path")).thenReturn("");
+
+        topNavigationServlet.doGet(request, response);
+
+        verify(response).sendError(SlingHttpServletResponse.SC_BAD_REQUEST, "Payload path is required");
+    }
+
+    @Test
+    public void testDoGet_WithNullPayload() throws Exception {
+        when(request.getParameter("path")).thenReturn(null);
+
+        topNavigationServlet.doGet(request, response);
+
+        verify(response).sendError(SlingHttpServletResponse.SC_BAD_REQUEST, "Payload path is required");
+    }
+}
