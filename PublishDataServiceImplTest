@@ -1,0 +1,100 @@
+package com.ms.wealthbook.core.service.impl;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ms.wealthbook.core.models.TopNavMenu;
+import com.ms.wealthbook.core.service.SessionHanlderService;
+import com.ms.wealthbook.core.utils.Constants;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ValueMap;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+import org.mockito.runners.MockitoJUnitRunner;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
+
+@RunWith(MockitoJUnitRunner.class)
+public class PublishDataServiceImplTest {
+
+    @InjectMocks
+    private PublishDataServiceImpl publishDataService;
+
+    @Mock
+    private SessionHanlderService sessionHanlderService;
+
+    @Mock
+    private ResourceResolver resourceResolver;
+
+    @Mock
+    private Resource resource;
+
+    @Mock
+    private Resource parentResource;
+
+    @Mock
+    private ValueMap valueMap;
+
+    @Before
+    public void setUp() {
+        MockitoAnnotations.initMocks(this);
+        when(sessionHanlderService.getResourceResolver()).thenReturn(resourceResolver);
+    }
+
+    @Test
+    public void testGetTopNavigationJson_WithValidPayload() throws Exception {
+        String payload = "/content/test";
+        String expectedJson = "{\"nav\":{\"title\":\"Home\"}}";
+
+        when(resourceResolver.getResource(payload)).thenReturn(resource);
+        when(resource.getPath()).thenReturn(payload);
+        when(resourceResolver.getResource(payload + Constants.TOP_NAV_JCR_PATH)).thenReturn(parentResource);
+        when(parentResource.getValueMap()).thenReturn(valueMap);
+        when(valueMap.get("title", String.class)).thenReturn("Home");
+
+        String jsonResult = publishDataService.getTopNavigationJson(payload);
+
+        assertNotNull(jsonResult);
+        assertTrue(jsonResult.contains("Home"));
+    }
+
+    @Test
+    public void testGetTopNavigationJson_WithEmptyPayload() {
+        String jsonResult = publishDataService.getTopNavigationJson("");
+        assertEquals("{}", jsonResult);
+    }
+
+    @Test
+    public void testGetTopNavigationJson_WithNullPayload() {
+        String jsonResult = publishDataService.getTopNavigationJson(null);
+        assertEquals("{}", jsonResult);
+    }
+
+    @Test
+    public void testProcessPayload_WithValidResource() {
+        when(resource.getPath()).thenReturn("/content/test");
+        when(resourceResolver.getResource("/content/test" + Constants.TOP_NAV_JCR_PATH)).thenReturn(parentResource);
+        when(parentResource.getValueMap()).thenReturn(valueMap);
+        when(valueMap.get("title", String.class)).thenReturn("Home");
+
+        TopNavMenu topNavMenu = publishDataService.processPayload(resource, resourceResolver);
+
+        assertNotNull(topNavMenu);
+        assertEquals("Home", topNavMenu.getTitle());
+    }
+
+    @Test
+    public void testProcessPayload_WithNullResource() {
+        TopNavMenu topNavMenu = publishDataService.processPayload(null, resourceResolver);
+        assertNull(topNavMenu);
+    }
+}
