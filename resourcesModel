@@ -1,0 +1,91 @@
+package com.example.models;
+
+import com.adobe.cq.export.json.ComponentExporter;
+import com.adobe.cq.export.json.ExporterConstants;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ValueMap;
+import org.apache.sling.models.annotations.DefaultInjectionStrategy;
+import org.apache.sling.models.annotations.Exporter;
+import org.apache.sling.models.annotations.Model;
+import org.apache.sling.models.annotations.injectorspecific.ChildResource;
+import org.apache.sling.models.annotations.injectorspecific.ValueMapValue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import javax.annotation.PostConstruct;
+import java.util.Iterator;
+
+@Model(
+    adaptables = Resource.class,
+    adapters = {ResourcesModel.class, ComponentExporter.class},
+    resourceType = "wealthbookcms/components/resources",
+    defaultInjectionStrategy = DefaultInjectionStrategy.OPTIONAL
+)
+@Exporter(name = ExporterConstants.SLING_MODEL_EXPORTER_NAME, extensions = ExporterConstants.SLING_MODEL_EXTENSION)
+public class ResourcesModel implements ComponentExporter {
+
+    private static final Logger log = LoggerFactory.getLogger(ResourcesModel.class);
+
+    @ValueMapValue
+    @JsonProperty("heading")
+    private String heading;
+
+    @ValueMapValue
+    @JsonProperty("title")
+    private String title;
+
+    @ValueMapValue
+    @JsonProperty("resourcesDescription")
+    private String resourcesDescription;
+
+    @ChildResource(name = "resourcelinks")
+    private Resource resourcelinks;
+
+    private String jsonFormat;
+
+    @PostConstruct
+    protected void init() {
+        log.info("Initializing ResourcesModel...");
+
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("heading", heading);
+        jsonObject.addProperty("title", title);
+        jsonObject.addProperty("resourcesDescription", resourcesDescription);
+
+        // Convert multifield resourcelinks into JSON array
+        JsonArray resourcesArray = new JsonArray();
+        if (resourcelinks != null) {
+            Iterator<Resource> resourceIterator = resourcelinks.getChildren().iterator();
+            while (resourceIterator.hasNext()) {
+                Resource resourceItem = resourceIterator.next();
+                ValueMap valueMap = resourceItem.getValueMap();
+
+                JsonObject resourceObject = new JsonObject();
+                resourceObject.addProperty("resourceTitle", valueMap.get("resourceTitle", ""));
+                resourceObject.addProperty("linkUrl", valueMap.get("linkUrl", ""));
+                resourceObject.addProperty("linkWindowType", valueMap.get("linkWindowType", ""));
+                resourceObject.addProperty("isExternal", valueMap.get("isExternal", Boolean.FALSE));
+
+                resourcesArray.add(resourceObject);
+            }
+        }
+        jsonObject.add("resourcelinks", resourcesArray);
+
+        // Store as JSON String
+        jsonFormat = jsonObject.toString();
+
+        log.info("Generated JSON: {}", jsonFormat);
+    }
+
+    @JsonProperty("jsonFormat")
+    public String getJsonFormat() {
+        return jsonFormat;
+    }
+
+    @Override
+    public String getExportedType() {
+        return "wealthbookcms/components/resources";
+    }
+}
