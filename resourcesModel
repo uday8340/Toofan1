@@ -89,3 +89,45 @@ public class ResourcesModel implements ComponentExporter {
         return "wealthbookcms/components/resources";
     }
 }
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+import org.apache.commons.text.StringEscapeUtils; // Import this
+
+@PostConstruct
+protected void init() {
+    log.info("Initializing ResourcesModel...");
+
+    JsonObject jsonObject = new JsonObject();
+    jsonObject.addProperty("heading", heading);
+    jsonObject.addProperty("title", title);
+
+    // Decode HTML-encoded characters in resourcesDescription
+    String decodedDescription = StringEscapeUtils.unescapeHtml4(resourcesDescription);
+    jsonObject.addProperty("resourcesDescription", decodedDescription);
+
+    JsonArray resourcesArray = new JsonArray();
+    if (resourcelinks != null) {
+        Iterator<Resource> resourceIterator = resourcelinks.getChildren().iterator();
+        while (resourceIterator.hasNext()) {
+            Resource resourceItem = resourceIterator.next();
+            ValueMap valueMap = resourceItem.getValueMap();
+
+            JsonObject resourceObject = new JsonObject();
+            resourceObject.addProperty("resourceTitle", valueMap.get("resourceTitle", ""));
+            resourceObject.addProperty("linkUrl", valueMap.get("linkUrl", ""));
+            resourceObject.addProperty("linkWindowType", valueMap.get("linkWindowType", ""));
+            resourceObject.addProperty("isExternal", valueMap.get("isExternal", Boolean.FALSE));
+
+            resourcesArray.add(resourceObject);
+        }
+    }
+    jsonObject.add("resourcelinks", resourcesArray);
+
+    Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    jsonFormat = gson.toJson(jsonObject);
+
+    log.info("Generated JSON: {}", jsonFormat);
+}
