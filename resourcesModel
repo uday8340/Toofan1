@@ -174,19 +174,16 @@ public class ResourcesModelTest {
 
     @Before
     public void setUp() {
-        // Manually inject fields because @ValueMapValue doesn't get injected in unit tests
         resourcesModel = new ResourcesModel();
-
-        // Using reflection to inject private fields
         injectPrivateField(resourcesModel, "heading", "Sample Heading");
         injectPrivateField(resourcesModel, "title", "Sample Title");
         injectPrivateField(resourcesModel, "resourcesDescription", "Sample Description");
-        injectPrivateField(resourcesModel, "resourcelinks", resourcelinks);
     }
 
     @Test
     public void testInitWithResourcelinks() {
-        // Set up child resources
+        injectPrivateField(resourcesModel, "resourcelinks", resourcelinks);
+
         List<Resource> children = Arrays.asList(childResource1, childResource2);
         when(resourcelinks.getChildren()).thenReturn(children);
 
@@ -202,24 +199,18 @@ public class ResourcesModelTest {
         when(valueMap2.get("linkWindowType", "")).thenReturn("same");
         when(valueMap2.get("isExternal", Boolean.FALSE)).thenReturn(false);
 
-        // Invoke @PostConstruct manually
         resourcesModel.init();
-
         String jsonOutput = resourcesModel.getJsonFormat();
-
-        // Basic validations
         JsonObject parsed = com.google.gson.JsonParser.parseString(jsonOutput).getAsJsonObject();
 
         assertEquals("Sample Heading", parsed.get("heading").getAsString());
         assertEquals("Sample Title", parsed.get("title").getAsString());
         assertEquals("Sample Description", parsed.get("resourcesDescription").getAsString());
-
-        assertEquals(2, parsed.get("resourcelinks").getAsJsonArray().size());
+        assertEquals(2, parsed.getAsJsonArray("resourcelinks").size());
     }
 
     @Test
     public void testInitWithoutResourcelinks() {
-        // No children
         injectPrivateField(resourcesModel, "resourcelinks", null);
 
         resourcesModel.init();
@@ -238,7 +229,7 @@ public class ResourcesModelTest {
         assertEquals("wealthbookcms/components/resources", resourcesModel.getExportedType());
     }
 
-    // --- Utility method to inject private fields ---
+    // Utility method for injecting private fields via reflection
     private void injectPrivateField(Object target, String fieldName, Object value) {
         try {
             java.lang.reflect.Field field = target.getClass().getDeclaredField(fieldName);
