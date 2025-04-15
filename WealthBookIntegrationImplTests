@@ -1,0 +1,94 @@
+import com.adobe.granite.workflow.exec.WorkflowSession;
+import com.google.gson.JsonObject;
+import io.wcm.testing.mock.aem.junit.AemContext;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.util.EntityUtils;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.mockito.*;
+
+import javax.jcr.Session;
+import java.io.IOException;
+
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.Mockito.*;
+
+public class WealthbookServiceIntegrationImplTest {
+
+    @Rule
+    public final AemContext context = new AemContext();
+
+    @InjectMocks
+    private WealthbookServiceIntegrationImpl wealthbookService;
+
+    @Mock
+    private CloseableHttpClient httpClient;
+
+    @Mock
+    private CloseableHttpResponse httpResponse;
+
+    @Mock
+    private HttpPost httpPost;
+
+    @Mock
+    private WorkflowSession workflowSession;
+
+    @Mock
+    private Session session;
+
+    @Mock
+    private ResourceResolver resolver;
+
+    @Before
+    public void setup() throws Exception {
+        MockitoAnnotations.initMocks(this);
+        wealthbookService = new WealthbookServiceIntegrationImpl();
+        wealthbookService.setHttpClient(httpClient); // Assuming there's a setter or make the field package-private for test
+    }
+
+    @Test
+    public void testExecuteWealthbookPostRequest_success() throws Exception {
+        // Given
+        JsonObject dummyJson = new JsonObject();
+        dummyJson.addProperty("key", "value");
+
+        when(httpClient.execute(any(HttpPost.class))).thenReturn(httpResponse);
+        when(httpResponse.getEntity()).thenReturn(null); // No entity to read from
+
+        // When
+        wealthbookService.executeWealthbookPostRequest("http://dummy-url.com", dummyJson);
+
+        // Then
+        verify(httpClient, times(1)).execute(any(HttpPost.class));
+    }
+
+    @Test
+    public void testExecuteWealthbookPostRequest_exception() throws Exception {
+        JsonObject dummyJson = new JsonObject();
+        dummyJson.addProperty("key", "value");
+
+        when(httpClient.execute(any(HttpPost.class))).thenThrow(new IOException("Simulated IO Exception"));
+
+        wealthbookService.executeWealthbookPostRequest("http://dummy-url.com", dummyJson);
+
+        // No exception should be thrown, should just log
+        verify(httpClient, times(1)).execute(any(HttpPost.class));
+    }
+
+    @Test
+    public void testGenerateDummyJson_success() {
+        JsonObject result = wealthbookService.generateDummyJson();
+        assertNotNull(result);
+        // You can add more specific key/value assertions if needed
+    }
+
+    @Test
+    public void testSetHttpClient() {
+        wealthbookService.setHttpClient(httpClient);
+        // No assertion needed unless you want to invoke `executeWealthbookPostRequest` after this
+    }
+}
