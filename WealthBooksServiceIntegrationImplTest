@@ -1,0 +1,86 @@
+package com.ms.wealthbook.core.service.impl;
+
+import com.ms.wealthbook.core.service.WealthBooksServiceIntegration;
+import org.apache.http.HttpEntity;
+import org.apache.http.StatusLine;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.util.EntityUtils;
+import org.json.JSONObject;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.*;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.HttpClientBuilder;
+
+import java.io.IOException;
+
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.Mockito.*;
+
+@RunWith(org.mockito.junit.MockitoJUnitRunner.class)
+public class WealthBooksServiceIntegrationImplTest {
+
+    @InjectMocks
+    private WealthBooksServiceIntegrationImpl wealthBooksServiceIntegration;
+
+    @Mock
+    private CloseableHttpClient mockHttpClient;
+
+    @Mock
+    private CloseableHttpResponse mockResponse;
+
+    @Mock
+    private StatusLine mockStatusLine;
+
+    @Mock
+    private HttpEntity mockEntity;
+
+    @Spy
+    private HttpClientBuilder spyHttpClientBuilder = HttpClientBuilder.create();
+
+    @Before
+    public void setUp() throws Exception {
+        // Force HttpClientBuilder.create() to return spy
+        Mockito.mockStatic(HttpClientBuilder.class).when(HttpClientBuilder::create).thenReturn(spyHttpClientBuilder);
+        doReturn(mockHttpClient).when(spyHttpClientBuilder).build();
+    }
+
+    @Test
+    public void testSendTopNavigationJson_success() throws Exception {
+        // Arrange
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("menu", "top");
+
+        when(mockHttpClient.execute(any(HttpPost.class))).thenReturn(mockResponse);
+        when(mockResponse.getStatusLine()).thenReturn(mockStatusLine);
+        when(mockStatusLine.getStatusCode()).thenReturn(200);
+        when(mockResponse.getEntity()).thenReturn(mockEntity);
+        when(EntityUtils.toString(mockEntity)).thenReturn("{\"result\":\"ok\"}");
+
+        // Act
+        CloseableHttpResponse response = wealthBooksServiceIntegration.sendTopNavigationJson(jsonObject);
+
+        // Assert
+        assertNotNull(response);
+        verify(mockHttpClient, times(1)).execute(any(HttpPost.class));
+        verify(mockResponse, times(1)).getStatusLine();
+    }
+
+    @Test
+    public void testSendTopNavigationJson_exception() throws Exception {
+        // Arrange
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("menu", "top");
+
+        when(mockHttpClient.execute(any(HttpPost.class))).thenThrow(new IOException("Connection failed"));
+
+        // Act
+        CloseableHttpResponse response = wealthBooksServiceIntegration.sendTopNavigationJson(jsonObject);
+
+        // Assert
+        assertNull(response); // Expected null due to exception
+        verify(mockHttpClient, times(1)).execute(any(HttpPost.class));
+    }
+}
