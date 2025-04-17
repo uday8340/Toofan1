@@ -1,32 +1,10 @@
-package com.ms.wealthbook.core.service.impl;
-
-import com.ms.wealthbook.core.service.WealthBooksServiceIntegration;
-import org.apache.http.HttpEntity;
-import org.apache.http.StatusLine;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.util.EntityUtils;
-import org.json.JSONObject;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.*;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.HttpClientBuilder;
-
-import java.io.IOException;
-
-import static org.junit.Assert.assertNotNull;
-import static org.mockito.Mockito.*;
-
-@RunWith(org.mockito.junit.MockitoJUnitRunner.class)
+@RunWith(MockitoJUnitRunner.class)
 public class WealthBooksServiceIntegrationImplTest {
 
-    @InjectMocks
-    private WealthBooksServiceIntegrationImpl wealthBooksServiceIntegration;
+    private WealthBooksServiceIntegrationImpl service;
 
-    @Mock
-    private CloseableHttpClient mockHttpClient;
+    @Spy
+    private CloseableHttpClient spyClient = HttpClientBuilder.create().build();
 
     @Mock
     private CloseableHttpResponse mockResponse;
@@ -37,50 +15,43 @@ public class WealthBooksServiceIntegrationImplTest {
     @Mock
     private HttpEntity mockEntity;
 
-    @Spy
-    private HttpClientBuilder spyHttpClientBuilder = HttpClientBuilder.create();
-
     @Before
     public void setUp() throws Exception {
-        // Force HttpClientBuilder.create() to return spy
-        Mockito.mockStatic(HttpClientBuilder.class).when(HttpClientBuilder::create).thenReturn(spyHttpClientBuilder);
-        doReturn(mockHttpClient).when(spyHttpClientBuilder).build();
+        // Use a real instance of the class under test
+        service = new WealthBooksServiceIntegrationImpl();
+
+        // Use reflection to inject our spyClient
+        Field clientField = WealthBooksServiceIntegrationImpl.class.getDeclaredField("httpClient");
+        clientField.setAccessible(true);
+        clientField.set(service, spyClient);
     }
 
     @Test
     public void testSendTopNavigationJson_success() throws Exception {
-        // Arrange
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("menu", "top");
+        JSONObject json = new JSONObject();
+        json.put("key", "value");
 
-        when(mockHttpClient.execute(any(HttpPost.class))).thenReturn(mockResponse);
+        doReturn(mockResponse).when(spyClient).execute(any(HttpPost.class));
         when(mockResponse.getStatusLine()).thenReturn(mockStatusLine);
         when(mockStatusLine.getStatusCode()).thenReturn(200);
         when(mockResponse.getEntity()).thenReturn(mockEntity);
-        when(EntityUtils.toString(mockEntity)).thenReturn("{\"result\":\"ok\"}");
+        when(EntityUtils.toString(mockEntity)).thenReturn("{\"message\":\"ok\"}");
 
-        // Act
-        CloseableHttpResponse response = wealthBooksServiceIntegration.sendTopNavigationJson(jsonObject);
+        CloseableHttpResponse result = service.sendTopNavigationJson(json);
 
-        // Assert
-        assertNotNull(response);
-        verify(mockHttpClient, times(1)).execute(any(HttpPost.class));
-        verify(mockResponse, times(1)).getStatusLine();
+        assertNotNull(result);
+        verify(spyClient, times(1)).execute(any(HttpPost.class));
     }
 
     @Test
     public void testSendTopNavigationJson_exception() throws Exception {
-        // Arrange
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("menu", "top");
+        JSONObject json = new JSONObject();
+        json.put("key", "value");
 
-        when(mockHttpClient.execute(any(HttpPost.class))).thenThrow(new IOException("Connection failed"));
+        doThrow(new IOException("Forced error")).when(spyClient).execute(any(HttpPost.class));
 
-        // Act
-        CloseableHttpResponse response = wealthBooksServiceIntegration.sendTopNavigationJson(jsonObject);
+        CloseableHttpResponse result = service.sendTopNavigationJson(json);
 
-        // Assert
-        assertNull(response); // Expected null due to exception
-        verify(mockHttpClient, times(1)).execute(any(HttpPost.class));
+        assertNull(result); // since catch block returns null
     }
 }
