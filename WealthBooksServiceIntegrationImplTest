@@ -1,26 +1,5 @@
-package com.ms.wealthbook.core.service.impl;
-
-import static org.mockito.Mockito.*;
-import static org.junit.Assert.*;
-
-import java.io.IOException;
-
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.util.EntityUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.StatusLine;
-import org.json.JSONObject;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.*;
-import org.mockito.junit.MockitoJUnitRunner;
-
-import com.ms.wealthbook.core.service.WealthBooksServiceIntegration;
-
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({ HttpClientBuilder.class })
 public class WealthBooksServiceIntegrationImplTest {
 
     @InjectMocks
@@ -41,44 +20,35 @@ public class WealthBooksServiceIntegrationImplTest {
     private JSONObject requestJson;
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
+        MockitoAnnotations.initMocks(this);
+        PowerMockito.mockStatic(HttpClientBuilder.class);
+
+        HttpClientBuilder builderMock = mock(HttpClientBuilder.class);
+        when(HttpClientBuilder.create()).thenReturn(builderMock);
+        when(builderMock.build()).thenReturn(mockHttpClient);
+
         requestJson = new JSONObject();
         requestJson.put("key", "value");
     }
 
     @Test
     public void testSendTopNavigationJson_success() throws Exception {
-        // Mock static method call for HttpClients
-        try (MockedStatic<HttpClientBuilder> httpClientBuilderStatic = Mockito.mockStatic(HttpClientBuilder.class)) {
-            HttpClientBuilder mockBuilder = mock(HttpClientBuilder.class);
-            httpClientBuilderStatic.when(HttpClientBuilder::create).thenReturn(mockBuilder);
-            when(mockBuilder.build()).thenReturn(mockHttpClient);
+        when(mockHttpClient.execute(any(HttpPost.class))).thenReturn(mockResponse);
+        when(mockResponse.getStatusLine()).thenReturn(mockStatusLine);
+        when(mockStatusLine.getStatusCode()).thenReturn(200);
+        when(mockResponse.getEntity()).thenReturn(mockHttpEntity);
+        when(EntityUtils.toString(mockHttpEntity)).thenReturn("{\"response\": \"success\"}");
 
-            // Mock behavior of HttpClient
-            when(mockHttpClient.execute(any(HttpPost.class))).thenReturn(mockResponse);
-            when(mockResponse.getStatusLine()).thenReturn(mockStatusLine);
-            when(mockStatusLine.getStatusCode()).thenReturn(200);
-            when(mockResponse.getEntity()).thenReturn(mockHttpEntity);
-            when(EntityUtils.toString(mockHttpEntity)).thenReturn("{\"response\": \"success\"}");
-
-            CloseableHttpResponse response = service.sendTopNavigationJson(requestJson);
-            assertNotNull(response);
-        }
+        CloseableHttpResponse result = service.sendTopNavigationJson(requestJson);
+        assertNotNull(result);
     }
 
     @Test
     public void testSendTopNavigationJson_exception() throws Exception {
-        // Mock static method call for HttpClients
-        try (MockedStatic<HttpClientBuilder> httpClientBuilderStatic = Mockito.mockStatic(HttpClientBuilder.class)) {
-            HttpClientBuilder mockBuilder = mock(HttpClientBuilder.class);
-            httpClientBuilderStatic.when(HttpClientBuilder::create).thenReturn(mockBuilder);
-            when(mockBuilder.build()).thenReturn(mockHttpClient);
+        when(mockHttpClient.execute(any(HttpPost.class))).thenThrow(new IOException("Simulated IO Exception"));
 
-            // Throw IOException
-            when(mockHttpClient.execute(any(HttpPost.class))).thenThrow(new IOException("Simulated exception"));
-
-            CloseableHttpResponse response = service.sendTopNavigationJson(requestJson);
-            assertNull(response);
-        }
+        CloseableHttpResponse result = service.sendTopNavigationJson(requestJson);
+        assertNull(result);
     }
 }
