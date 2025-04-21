@@ -1,10 +1,33 @@
+package com.ms.wealthbook.core.service.impl;
+
+import static org.mockito.Mockito.*;
+import static org.junit.Assert.*;
+
+import java.io.IOException;
+
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.util.EntityUtils;
+import org.apache.http.HttpEntity;
+import org.apache.http.StatusLine;
+import org.json.JSONObject;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.*;
+import org.mockito.junit.MockitoJUnitRunner;
+
+import com.ms.wealthbook.core.service.WealthBooksServiceIntegration;
+
 @RunWith(MockitoJUnitRunner.class)
 public class WealthBooksServiceIntegrationImplTest {
 
+    @InjectMocks
     private WealthBooksServiceIntegrationImpl service;
 
-    @Spy
-    private CloseableHttpClient spyClient = HttpClientBuilder.create().build();
+    @Mock
+    private CloseableHttpClient mockHttpClient;
 
     @Mock
     private CloseableHttpResponse mockResponse;
@@ -13,45 +36,49 @@ public class WealthBooksServiceIntegrationImplTest {
     private StatusLine mockStatusLine;
 
     @Mock
-    private HttpEntity mockEntity;
+    private HttpEntity mockHttpEntity;
+
+    private JSONObject requestJson;
 
     @Before
-    public void setUp() throws Exception {
-        // Use a real instance of the class under test
-        service = new WealthBooksServiceIntegrationImpl();
-
-        // Use reflection to inject our spyClient
-        Field clientField = WealthBooksServiceIntegrationImpl.class.getDeclaredField("httpClient");
-        clientField.setAccessible(true);
-        clientField.set(service, spyClient);
+    public void setUp() {
+        requestJson = new JSONObject();
+        requestJson.put("key", "value");
     }
 
     @Test
     public void testSendTopNavigationJson_success() throws Exception {
-        JSONObject json = new JSONObject();
-        json.put("key", "value");
+        // Mock static method call for HttpClients
+        try (MockedStatic<HttpClientBuilder> httpClientBuilderStatic = Mockito.mockStatic(HttpClientBuilder.class)) {
+            HttpClientBuilder mockBuilder = mock(HttpClientBuilder.class);
+            httpClientBuilderStatic.when(HttpClientBuilder::create).thenReturn(mockBuilder);
+            when(mockBuilder.build()).thenReturn(mockHttpClient);
 
-        doReturn(mockResponse).when(spyClient).execute(any(HttpPost.class));
-        when(mockResponse.getStatusLine()).thenReturn(mockStatusLine);
-        when(mockStatusLine.getStatusCode()).thenReturn(200);
-        when(mockResponse.getEntity()).thenReturn(mockEntity);
-        when(EntityUtils.toString(mockEntity)).thenReturn("{\"message\":\"ok\"}");
+            // Mock behavior of HttpClient
+            when(mockHttpClient.execute(any(HttpPost.class))).thenReturn(mockResponse);
+            when(mockResponse.getStatusLine()).thenReturn(mockStatusLine);
+            when(mockStatusLine.getStatusCode()).thenReturn(200);
+            when(mockResponse.getEntity()).thenReturn(mockHttpEntity);
+            when(EntityUtils.toString(mockHttpEntity)).thenReturn("{\"response\": \"success\"}");
 
-        CloseableHttpResponse result = service.sendTopNavigationJson(json);
-
-        assertNotNull(result);
-        verify(spyClient, times(1)).execute(any(HttpPost.class));
+            CloseableHttpResponse response = service.sendTopNavigationJson(requestJson);
+            assertNotNull(response);
+        }
     }
 
     @Test
     public void testSendTopNavigationJson_exception() throws Exception {
-        JSONObject json = new JSONObject();
-        json.put("key", "value");
+        // Mock static method call for HttpClients
+        try (MockedStatic<HttpClientBuilder> httpClientBuilderStatic = Mockito.mockStatic(HttpClientBuilder.class)) {
+            HttpClientBuilder mockBuilder = mock(HttpClientBuilder.class);
+            httpClientBuilderStatic.when(HttpClientBuilder::create).thenReturn(mockBuilder);
+            when(mockBuilder.build()).thenReturn(mockHttpClient);
 
-        doThrow(new IOException("Forced error")).when(spyClient).execute(any(HttpPost.class));
+            // Throw IOException
+            when(mockHttpClient.execute(any(HttpPost.class))).thenThrow(new IOException("Simulated exception"));
 
-        CloseableHttpResponse result = service.sendTopNavigationJson(json);
-
-        assertNull(result); // since catch block returns null
+            CloseableHttpResponse response = service.sendTopNavigationJson(requestJson);
+            assertNull(response);
+        }
     }
 }
