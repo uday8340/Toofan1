@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root
+    xmlns:sling="http://sling.apache.org/jcr/sling/1.0"
+    xmlns:cq="http://www.day.com/jcr/cq/1.0"
+    xmlns:jcr="http://www.jcp.org/jcr/1.0"
+    jcr:primaryType="cq:Dialog"
+    cq:dialogMode="floating"
+    jcr:title="Contact Us Configuration">
+
+    <content
+        jcr:primaryType="nt:unstructured"
+        sling:resourceType="granite/ui/components/coral/foundation/container">
+
+        <items jcr:primaryType="nt:unstructured">
+            <form
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/form">
+
+                <items jcr:primaryType="nt:unstructured">
+
+                    <!-- Configurable Header -->
+                    <header
+                        jcr:primaryType="nt:unstructured"
+                        sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
+                        fieldLabel="Header Text"
+                        name="./headerText"
+                        required="true"/>
+
+                    <!-- Dropdown for selecting team -->
+                    <selectTeam
+                        jcr:primaryType="nt:unstructured"
+                        sling:resourceType="granite/ui/components/coral/foundation/form/select"
+                        fieldLabel="Select a team"
+                        name="./selectTeam">
+                        <items jcr:primaryType="nt:unstructured">
+                            <chartbook
+                                jcr:primaryType="nt:unstructured"
+                                text="ChartBook"
+                                value="chartbook"/>
+                            <pitchbook
+                                jcr:primaryType="nt:unstructured"
+                                text="PitchBook"
+                                value="pitchbook"/>
+                        </items>
+                    </selectTeam>
+
+                    <!-- Horizontal Divider -->
+                    <divider1
+                        jcr:primaryType="nt:unstructured"
+                        sling:resourceType="granite/ui/components/coral/foundation/hr"/>
+
+                    <!-- Configurable Welcome Text -->
+                    <welcomeText
+                        jcr:primaryType="nt:unstructured"
+                        sling:resourceType="granite/ui/components/coral/foundation/form/textarea"
+                        fieldLabel="Welcome Text"
+                        name="./welcomeText"/>
+
+                    <!-- Greeting Message -->
+                    <greetingMessage
+                        jcr:primaryType="nt:unstructured"
+                        sling:resourceType="granite/ui/components/coral/foundation/form/textarea"
+                        fieldLabel="Greeting Text (Optional)"
+                        name="./greetingText"
+                        maxlength="1000"/>
+
+                    <!-- Horizontal Divider -->
+                    <divider2
+                        jcr:primaryType="nt:unstructured"
+                        sling:resourceType="granite/ui/components/coral/foundation/hr"/>
+
+                    <!-- Two Column Layout for Direct Key Contact -->
+                    <directKeyContact
+                        jcr:primaryType="nt:unstructured"
+                        sling:resourceType="granite/ui/components/coral/foundation/layouts/fixedcolumns">
+
+                        <columns jcr:primaryType="nt:unstructured">
+
+                            <column1 jcr:primaryType="nt:unstructured">
+                                <items jcr:primaryType="nt:unstructured">
+                                    <chartbookEmail
+                                        jcr:primaryType="nt:unstructured"
+                                        sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
+                                        fieldLabel="ChartBook Email"
+                                        name="./chartbookEmail"/>
+                                    <techConnectLink
+                                        jcr:primaryType="nt:unstructured"
+                                        sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
+                                        fieldLabel="TechConnect Link"
+                                        name="./techConnectLink"/>
+                                    <techConnectPhone
+                                        jcr:primaryType="nt:unstructured"
+                                        sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
+                                        fieldLabel="TechConnect Phone"
+                                        name="./techConnectPhone"/>
+                                </items>
+                            </column1>
+
+                            <column2 jcr:primaryType="nt:unstructured">
+                                <items jcr:primaryType="nt:unstructured">
+                                    <pitchbookEmail
+                                        jcr:primaryType="nt:unstructured"
+                                        sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
+                                        fieldLabel="PitchBook Email"
+                                        name="./pitchbookEmail"/>
+                                    <pitchbookPhone
+                                        jcr:primaryType="nt:unstructured"
+                                        sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
+                                        fieldLabel="PitchBook Phone"
+                                        name="./pitchbookPhone"/>
+                                </items>
+                            </column2>
+
+                        </columns>
+                    </directKeyContact>
+
+                </items>
+
+            </form>
+        </items>
+
+    </content>
+</jcr:root>
+
+
+package com.example.core.models;
+
+import com.adobe.cq.export.json.ComponentExporter;
+import com.adobe.cq.export.json.ExporterConstants;
+import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.models.annotations.DefaultInjectionStrategy;
+import org.apache.sling.models.annotations.Exporter;
+import org.apache.sling.models.annotations.Model;
+import org.apache.sling.models.annotations.ValueMapValue;
+import javax.annotation.PostConstruct;
+
+@Model(adaptables = Resource.class, adapters = {ContactUsModel.class, ComponentExporter.class},
+       resourceType = ContactUsModel.RESOURCE_TYPE,
+       defaultInjectionStrategy = DefaultInjectionStrategy.OPTIONAL)
+@Exporter(name = ExporterConstants.SLING_MODEL_EXPORTER_NAME, extensions = ExporterConstants.SLING_MODEL_EXTENSION)
+public class ContactUsModel implements ComponentExporter {
+
+    static final String RESOURCE_TYPE = "example/components/contactus";
+
+    @ValueMapValue
+    @Getter
+    private String headerText;
+
+    @ValueMapValue
+    @Getter
+    private String selectTeam;
+
+    @ValueMapValue
+    @Getter
+    private String welcomeText;
+
+    @ValueMapValue
+    @Getter
+    private String greetingText;
+
+    @ValueMapValue
+    @Getter
+    private String chartbookEmail;
+
+    @ValueMapValue
+    @Getter
+    private String pitchbookEmail;
+
+    @ValueMapValue
+    @Getter
+    private String pitchbookPhone;
+
+    @ValueMapValue
+    @Getter
+    private String techConnectLink;
+
+    @ValueMapValue
+    @Getter
+    private String techConnectPhone;
+
+    @PostConstruct
+    protected void init() {
+        // fallback logic if needed
+        if (StringUtils.isBlank(selectTeam)) {
+            selectTeam = "chartbook"; // Default selection
+        }
+    }
+
+    @Override
+    public String getExportedType() {
+        return RESOURCE_TYPE;
+    }
+}
+
+
+
+<div class="contact-us-container">
+    <h2>${model.headerText}</h2>
+
+    <div class="team-selection">
+        <p>Selected Team: ${model.selectTeam}</p>
+    </div>
+
+    <hr>
+
+    <div class="welcome-message">
+        <p>${model.welcomeText}</p>
+    </div>
+
+    <div class="greeting-message">
+        <p>${model.greetingText}</p>
+    </div>
+
+    <hr>
+
+    <div class="direct-contacts">
+        <div class="contact-column">
+            <h3>ChartBook Contact</h3>
+            <p>Email: <a href="mailto:${model.chartbookEmail}">${model.chartbookEmail}</a></p>
+
+            <h3>TechConnect</h3>
+            <p>Link: <a href="${model.techConnectLink}" target="_blank">${model.techConnectLink}</a></p>
+            <p>Phone: ${model.techConnectPhone}</p>
+        </div>
+
+        <div class="contact-column">
+            <h3>PitchBook Contact</h3>
+            <p>Email: <a href="mailto:${model.pitchbookEmail}">${model.pitchbookEmail}</a></p>
+            <p>Phone: ${model.pitchbookPhone}</p>
+        </div>
+    </div>
+</div>
+
+
