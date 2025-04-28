@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+ni<?xml version="1.0" encoding="UTF-8"?>
 <jcr:root
     xmlns:sling="http://sling.apache.org/jcr/sling/1.0"
     xmlns:cq="http://www.day.com/jcr/cq/1.0"
@@ -196,6 +196,12 @@ public class ContactUsModel implements ComponentExporter {
 
 
 
+<!-- contactus.html -->
+
+<!-- 1. Bind the Sling Model -->
+<data-sly-use.model="com.example.core.models.ContactUsModel" />
+
+<!-- 2. Now you can use model properties below -->
 <div class="contact-us-container">
     <h2>${model.headerText}</h2>
 
@@ -227,10 +233,5 @@ public class ContactUsModel implements ComponentExporter {
 
         <div class="contact-column">
             <h3>PitchBook Contact</h3>
-            <p>Email: <a href="mailto:${model.pitchbookEmail}">${model.pitchbookEmail}</a></p>
-            <p>Phone: ${model.pitchbookPhone}</p>
-        </div>
-    </div>
-</div>
-
+            <p>Email: <a href="mailto:${model.pitch
 
