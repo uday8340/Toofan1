@@ -1,0 +1,32 @@
+<sly data-sly-test="${wcmmode.edit}">
+    <sly data-sly-use.templates="core/wcm/components/commons/v1/templates.html"
+         data-sly-call="${templates.placeholder @ isEmpty=true}" />
+</sly>
+
+<h5>MyGIO Dynamic Content Configuration</h5>
+<div><b>Page Path:</b> ${properties.pagePath}</div>
+
+<!-- Top-level 'links' multifield -->
+<div data-sly-list.link="${resource.getChildren}">
+    <div data-sly-test="${link.name == 'links'}">
+
+        <div data-sly-list.linkItem="${link.getChildren}">
+            <div data-sly-test="${linkItem.name == 'field'}">
+                <p><b>Route Path:</b> ${linkItem.getChild('routepath').valueMap['routepath']}</p>
+
+                <!-- Nested multifield 'linkList' -->
+                <div data-sly-list.nestedField="${linkItem.getChild('linkList').getChildren}">
+                    <div data-sly-test="${nestedField.name == 'field'}">
+                        <ul>
+                            <li><b>Property Key:</b> ${nestedField.getChild('propertykey').valueMap['propertykey']}</li>
+                            <li><b>Dynamic Content:</b> ${nestedField.getChild('dynamiccontent').valueMap['dynamiccontent'] @ context='html'}</li>
+                        </ul>
+                        <hr>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
