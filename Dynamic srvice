@@ -1,0 +1,46 @@
+private void generateDynamicContentList(ResourceResolver resourceResolver, JsonArray jsonArray, Node componentNode) {
+    try {
+        if (!componentNode.hasNode("dynamicContentList")) {
+            return;
+        }
+
+        Node dynamicContentListNode = componentNode.getNode("dynamicContentList");
+        String routePath = CommonUtils.getPropertyAsString(componentNode.getPath(), "pagePath", null, resourceResolver);
+
+        JsonObject object = new JsonObject();
+        object.addProperty("routePath", routePath);
+
+        NodeIterator iterator = dynamicContentListNode.getNodes();
+
+        while (iterator.hasNext()) {
+            Node childNode = iterator.nextNode();
+            NodeIterator innerIterator = childNode.getNodes();
+
+            if (!innerIterator.hasNext()) {
+                // Simple multifield (key-value)
+                String propertyKey = CommonUtils.getPropertyAsString(childNode.getPath(), "propertyKey", null, resourceResolver);
+                String dynamicContent = CommonUtils.getPropertyAsString(childNode.getPath(), "dynamicContent", null, resourceResolver);
+
+                if (StringUtils.isNotBlank(propertyKey) && !object.has(propertyKey)) {
+                    object.addProperty(propertyKey, dynamicContent);
+                }
+            } else {
+                // Nested multifield
+                while (innerIterator.hasNext()) {
+                    Node nestedNode = innerIterator.nextNode();
+                    String nestedKey = CommonUtils.getPropertyAsString(nestedNode.getPath(), "propertyKey", null, resourceResolver);
+                    String nestedValue = CommonUtils.getPropertyAsString(nestedNode.getPath(), "dynamicContent", null, resourceResolver);
+
+                    if (StringUtils.isNotBlank(nestedKey) && !object.has(nestedKey)) {
+                        object.addProperty(nestedKey, nestedValue);
+                    }
+                }
+            }
+        }
+
+        jsonArray.add(object);
+
+    } catch (Exception e) {
+        Logger.error("Exception in generateDynamicContentList {}", CommonUtils.getStackTrace(e));
+    }
+}
