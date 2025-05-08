@@ -1,0 +1,261 @@
+package com.ms.wealthbook.core.models;
+
+import com.google.gson.Gson;
+
+import com.google.gson.GsonBuilder;
+
+import com.google.gson.JsonArray;
+
+import com.google.gson.JsonObject;
+
+import org.apache.sling.api.resource. Resource;
+
+import org.apache.sling.models.annotations.DefaultInjectionStrategy;
+
+import org.apache.sling.models.annotations.Model;
+
+import org.apache.sling.models.annotations.Optional;
+
+import org.apache.sling.models.annotations.injectorspecific.ChildResource;
+
+import org.apache.sling.models.annotations.injectorspecific. ValueRapValue;
+
+import org.slf4j.Logger;
+
+import org.slf4j.LoggerFactory;
+
+Import java.util.List;
+
+@Model(adaptables Resource.class, defaultInjectionStrategy DefaultInjectionStrategy.OPTIONAL) 31 usag
+
+public class ContactUsModel {
+
+private static final Logger log LoggerFactory.getLogger(ContactUsModel.class); Zusages
+
+@ValuetMapValue
+
+3 usages
+
+@Optional
+
+private String header;
+
+@ValueMapValue 3 usages
+
+@optional
+
+private String welcomeText;
+
+@ValueMapValue 3 usages
+
+Optional
+
+private String subTitle:
+
+@ValueMapValue 3 usages
+
+@Optional
+
+private String note;
+
+@ChildResource 4 usages
+
+@optional
+
+private List<ContactUsItem> contactlist;
+
+private String jsonFormat;
+
+3 usages
+
+public String get.JsonFormat() { usage ankunsta
+
+log.info("Starting JSON generation for ContactUsModel");
+
+JsonObject jsonObject = new JsonObject();
+
+JsonObject.addProperty(property: "header", header);
+
+json@bject.addProperty(property "welcomeText", welcomeText);
+
+jsonObject.addProperty(property "subTitle", subTitle);
+
+jsonObject.addProperty(property "note", note);
+
+JsonArray contactArray = new JsonArray();
+
+I
+
+koms
+
+if (contactList != null) {
+
+for (ContactusIten contact: contactlist) {
+
+JsonObject contact@bject = new JsonObject();
+
+contact@bject.addProperty( property: "teanTitle", contact.getTeamTitle());
+
+contactObject.addProperty(property, "email", contact.getEmail());
+
+contactObject.addProperty(property "phone", contact.getPhone());
+
+JsonArray LinksArray new JsonArray();
+
+if (contact.getLinks() != null) {
+
+for (LinkItem link contact.getLinks()) {
+
+JsonObject LinkObject = new JsonObject();
+
+LinkObject.addProperty(property "LinkTitle", link.getLinkTitle());
+
+LinkObject.addProperty(property "LinkUrl", link.getLinklürl());
+
+Linkübject.addProperty("isExternal", link.isExternal());
+
+LinksArray.add(linkObject);
+
+contactObject.add(property "Links", LinksArray);
+
+contactArray.add(contactObject);
+
+else {
+
+jsonObject.add(property "contacts", contactArray);
+
+Gson gson new sonBuilder().setPrettyPrinting().create();
+
+JsonFormat gson.toJson(jsonObject);
+
+log.info("Generated JSON Response: {}", sonFormat);
+
+return jsonFormat,
+
+}
+
+public String getHeader(){return header;}
+
+public String getWelcomeText() (return welcomeText;} tusage
+
+ankuhisis
+
+public String getSubTitle() {return subTitle:ankha
+
+public String getNote() {return note;} usage anunta
+
+public List<ContactUsItem> getContactList() {return contactList; Susages, anuhata
+
+public void setHeader(String header) (this.header header;)
+
+public void setWelcomeText(String welcomeText) (this.welcomeText welcomeText;} public void setSubTitle(String subTitle) (this.subTitle subTitle;)
+
+ages
+
+public void setNote(String note) (this.note note: 3 usages
+
+public void setContactList(List<ContactUsiten contactlist) (this.contactlist contactlist;)
+
+Model (adaptables Resource.class, defaultInjectionStrategy DefaultInjectionStrategy.OPTIONAL)
+
+public static class ContactüsItem {
+
+ValueMapValue 2 usages
+
+Optional
+
+private String teasTitle:
+
+@ValueMapValue 2 inages
+
+Optional
+
+private String email;
+
+ValueMapValue
+
+2 usages
+
+Optional
+
+private String phone;
+
+@ValueMapValue no usages
+
+@0ptional
+
+private String note:
+
+@ChildResource 2 usages
+
+Optional
+
+private List<LinkItem> links;
+
+public String getTeamTitle() (return teenTitle:
+
+3 аркад алкилга
+
+I
+
+public String getEmail() (return email;}
+
+public String getPhone() {return phone;}
+
+public List<LinkItem> getLinks() {return Links:
+
+public void setTeanlitle(String teanTitle) (this.teanlitle teanTitle;
+
+usagesankuhila
+
+public void setEmail(String email) (this.email enail;
+
+public void setPhone (String phone) (this.phone phone:kule
+
+public void setLinks(List LinkItem> Links) (this.links
+
+links;uhsla
+
+Model(adaptables Resource.class, defaultInjectionStrategy DefaultInjectionStrategy.OPTIONAL) usagesanku
+
+public static class LinkIten (
+
+@ValueñapValue Jusages
+
+Optional
+
+private String LinkTitle:
+@ValueMapValue 2 usages
+
+@Optional
+
+private String linkUrl;
+
+@ValueMapValue
+
+2 usages
+
+@optional
+
+private boolean isExternal;
+
+I
+
+public String getLinkTitle() {return linkTitle;} ankuhsia
+
+public String getLinkUrl() {return LinkUrl;} ankuhsla
+
+public boolean isExternal() {return isExternal;} ankunsla
+
+public void setLinkTitle(String linkTitle) (this.LinkTitle linkTitle;} zankusta
+
+public void setLinkürl (String linkUrl) {this.linkÜrl LinkUrl;}ankuhsla
+
+public void setExternal (boolean isExternal) (this.isExternal isExternal;}ankubsta
+
+
+
+
+
+
+Get Outlook for Android
