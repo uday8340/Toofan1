@@ -1,0 +1,68 @@
+package com.ms.wealthbook.core.models;
+
+import com.google.gson.JsonObject;
+import com.ms.wealthbook.core.models.ContactUsModel.ContactUsItem;
+import com.ms.wealthbook.core.models.ContactUsModel.LinkItem;
+import org.apache.sling.api.resource.Resource;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.runners.MockitoJUnitRunner;
+
+import java.util.Arrays;
+import java.util.List;
+
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.Mockito.when;
+
+@RunWith(MockitoJUnitRunner.class)
+public class ContactUsModelTest {
+
+    @InjectMocks
+    private ContactUsModel contactUsModel;
+
+    @Mock
+    private Resource resource;
+
+    private ContactUsItem contactUsItem;
+    private LinkItem linkItem;
+
+    @Before
+    public void setUp() {
+        contactUsModel.setHeader("Contact Us");
+        contactUsModel.setWelcomeText("Welcome to Contact Us page");
+        contactUsModel.setSubTitle("Reach out to our teams");
+        contactUsModel.setNote("Note: Response within 24 hours");
+
+        // Create link item
+        linkItem = new LinkItem();
+        linkItem.setLinkTitle("Visit Website");
+        linkItem.setLinkUrl("http://example.com");
+        linkItem.setExternal(true);
+
+        // Create contact item
+        contactUsItem = new ContactUsItem();
+        contactUsItem.setTeamTitle("Support Team");
+        contactUsItem.setEmail("support@example.com");
+        contactUsItem.setPhone("+1234567890");
+        contactUsItem.setLinks(Arrays.asList(linkItem));
+
+        contactUsModel.setContactList(Arrays.asList(contactUsItem));
+    }
+
+    @Test
+    public void testGetJsonFormat() {
+        String jsonOutput = contactUsModel.getJsonFormat();
+        assertNotNull(jsonOutput);
+        System.out.println(jsonOutput);
+
+        // Optional: Validate some fields using GSON
+        JsonObject jsonObject = new com.google.gson.JsonParser().parse(jsonOutput).getAsJsonObject();
+        org.junit.Assert.assertEquals("Contact Us", jsonObject.get("header").getAsString());
+        org.junit.Assert.assertEquals("Welcome to Contact Us page", jsonObject.get("welcomeText").getAsString());
+        org.junit.Assert.assertTrue(jsonObject.get("contacts").getAsJsonArray().size() > 0);
+    }
+}
