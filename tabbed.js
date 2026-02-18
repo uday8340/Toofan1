@@ -41,3 +41,4 @@ window.addEventListener('load', function () {
         }
     });
 });
+componentElement.classList.add('tabs-initialized');
