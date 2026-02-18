@@ -1,7 +1,47 @@
-<!-- topNavL3.html (JavaScript portion) -->
-<script>
-document.addEventListener("DOMContentLoaded", function () {
+// No first-tab flash on refresh: tab container hidden until correct nav tab is set. For best result load this script in <head>.
+(function () {
+    var style = '.tab-container{visibility:hidden}.tab-container.tabs-initialized{visibility:visible}';
+    if (typeof document === 'undefined' || !document.documentElement) return;
+    if (!document.body) {
+        document.write('<style id="tab-no-flash">' + style + '</style>');
+    } else {
+        if (!document.getElementById('tab-no-flash')) {
+            var el = document.createElement('style');
+            el.id = 'tab-no-flash';
+            el.textContent = style;
+            (document.head || document.documentElement).appendChild(el);
+        }
+    }
+})();
+
+function initTabComponents() {
     addTooltipIfTruncatedLines(".line-clamp");
+    document.querySelectorAll('.tab-container').forEach(function (el, idx) {
+        setupTabComponent(el, 'tab-component-' + (idx + 1));
+    });
+    window.setupTabComponent = setupTabComponent;
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener("DOMContentLoaded", initTabComponents);
+} else {
+    initTabComponents();
+}
+
+window.addEventListener('hashchange', function () {
+    document.querySelectorAll('.tab-container').forEach(function (el) {
+        if (el.setupTabComponentInstance) {
+            el.setupTabComponentInstance.activateTabByHash();
+        }
+    });
+});
+
+window.addEventListener('load', function () {
+    document.querySelectorAll('.tab-container').forEach(function (el) {
+        if (el.setupTabComponentInstance) {
+            el.setupTabComponentInstance.activateTabByHash();
+        }
+    });
 });
 
 function setupTabComponent(componentElement, componentId) {
@@ -53,8 +93,7 @@ function setupTabComponent(componentElement, componentId) {
                 foundContentIndex = idx;
             }
         });
-
-        if (!tabToActivate && tabs.length > 0 && !tabId) {
+if (!tabToActivate && tabs.length > 0 && !tabId) {
             tabToActivate = tabs[0];
             contentIndex = 0;
         }
@@ -74,6 +113,11 @@ function setupTabComponent(componentElement, componentId) {
 
     // Activate tab based on hash if available
     function activateTabByHash() {
+        // Clear any default .active from HTML first so hash tab wins (avoids first-tab flash)
+        tabs.forEach((t) => t.classList.remove("active"));
+        componentElement.querySelectorAll('.navLink, .tab').forEach((t) => t.classList.remove("active"));
+        tabContent.forEach((c) => c.classList.remove("active"));
+        tabContentContainers.forEach((c) => c.classList.remove("active"));
         const hash = window.location.hash.trim();
         if (hash && hash.length > 1) {
             const tabId = hash.replace('#', '');
@@ -90,16 +134,13 @@ function setupTabComponent(componentElement, componentId) {
 
     // Initial activation by hash
     activateTabByHash();
+    componentElement.classList.add('tabs-initialized');
 
     // On click, use href/id mapping
     tabs.forEach((tab, idx) => {
         addTooltipIfTruncatedLines(".line-clamp");
         tab.addEventListener('click', (e) => {
-            let href = ta
-
-Kaustubh patil
-2:33 PM
-b.getAttribute("href");
+            let href = tab.getAttribute("href");
             let hasUniqueHref = href && href !== '#' && href.trim() !== '';
             if (tab.tagName.toLowerCase() === 'a' && hasUniqueHref) {
                 e.preventDefault();
@@ -117,32 +158,6 @@ b.getAttribute("href");
         activateTabByHash
     };
 }
-
-// Auto-initialize all tabbed components on the page
-document.querySelectorAll('.tab-container').forEach((el, idx) => {
-    setupTabComponent(el, 'tab-component-' + (idx + 1));
-});
-
-// Listen for hash changes to support browser navigation
-window.addEventListener('hashchange', function () {
-    document.querySelectorAll('.tab-container').forEach((el) => {
-        if (el.setupTabComponentInstance) {
-            el.setupTabComponentInstance.activateTabByHash();
-        }
-    });
-});
-
-// Ensure tab activation runs after full page load
-window.addEventListener('load', function () {
-    document.querySelectorAll('.tab-container').forEach((el) => {
-        if (el.setupTabComponentInstance) {
-            el.setupTabComponentInstance.activateTabByHash();
-        }
-    });
-});
-
-window.setupTabComponent = setupTabComponent;
-});  // end DOMContentLoaded (if the opening was at the top)
 
 $(document).on("click", ".tabs", function (event) {
     const anchorTag = event.target.getAttribute("target");
@@ -164,4 +179,3 @@ function trackButtonEvent(eventName, mainTitle, subTitle, contentType) {
     adobeAnalytics.setEventInfo(evenInfo);
     adobeAnalytics.trackEventAction();
 }
-</script>
