@@ -53,3 +53,9 @@
         container.style.visibility = '';
     }
 })();
+
+
+
+
+
+<style id="tab-no-flash">.tab-container{visibility:hidden}.tab-container.tabs-initialized{visibility:visible}</style>
