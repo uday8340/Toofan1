@@ -1,181 +1,55 @@
-// No first-tab flash on refresh: tab container hidden until correct nav tab is set. For best result load this script in <head>.
 (function () {
-    var style = '.tab-container{visibility:hidden}.tab-container.tabs-initialized{visibility:visible}';
     if (typeof document === 'undefined' || !document.documentElement) return;
+    var style = '.tab-container{visibility:hidden}.tab-container.tabs-initialized{visibility:visible}';
     if (!document.body) {
         document.write('<style id="tab-no-flash">' + style + '</style>');
-    } else {
-        if (!document.getElementById('tab-no-flash')) {
-            var el = document.createElement('style');
-            el.id = 'tab-no-flash';
-            el.textContent = style;
-            (document.head || document.documentElement).appendChild(el);
+        return;
+    }
+    if (!document.getElementById('tab-no-flash')) {
+        var el = document.createElement('style');
+        el.id = 'tab-no-flash';
+        el.textContent = style;
+        (document.head || document.documentElement).appendChild(el);
+    }
+    // When script runs at end of body: hide and set correct tab immediately (same tick) so no flash
+    var containers = document.querySelectorAll('.tab-container');
+    var hash = (window.location.hash || '').trim();
+    var tabId = hash.length > 1 ? hash.replace('#', '') : '';
+    for (var c = 0; c < containers.length; c++) {
+        var container = containers[c];
+        container.style.visibility = 'hidden';
+        var tabs = container.querySelectorAll('.tabs a, .tabs > div');
+        var tabContent = container.querySelectorAll('.tab-content');
+        var tabContentContainers = container.querySelectorAll('.tab-content-container');
+        if (!tabs.length || !tabContent.length) { container.style.visibility = ''; continue; }
+        var norm = (tabId || '').trim().toLowerCase();
+        for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+        container.querySelectorAll('.navLink, .tab').forEach(function (t) { t.classList.remove('active'); });
+        for (var j = 0; j < tabContent.length; j++) tabContent[j].classList.remove('active');
+        for (var k = 0; k < tabContentContainers.length; k++) tabContentContainers[k].classList.remove('active');
+        var tabToActivate = null, contentIdx = -1;
+        if (norm) {
+            for (var i = 0; i < tabs.length; i++) {
+                var href = (tabs[i].getAttribute('href') || '').replace('#', '').trim().toLowerCase();
+                if (href === norm) { tabToActivate = tabs[i]; contentIdx = i; break; }
+            }
         }
+        var foundIdx = -1;
+        for (var j = 0; j < tabContent.length; j++) {
+            if ((tabContent[j].id || '').trim().toLowerCase() === norm) { foundIdx = j; break; }
+        }
+        if (!tabToActivate && !norm && tabs[0]) { tabToActivate = tabs[0]; contentIdx = 0; }
+        var idx = foundIdx >= 0 ? foundIdx : contentIdx;
+        if (tabToActivate && idx >= 0 && tabContent[idx] && tabContentContainers[idx]) {
+            tabToActivate.classList.add('active');
+            tabContent[idx].classList.add('active');
+            tabContentContainers[idx].classList.add('active');
+        } else if (!norm && tabs[0] && tabContent[0] && tabContentContainers[0]) {
+            tabs[0].classList.add('active');
+            tabContent[0].classList.add('active');
+            tabContentContainers[0].classList.add('active');
+        }
+        container.classList.add('tabs-initialized');
+        container.style.visibility = '';
     }
 })();
-
-function initTabComponents() {
-    addTooltipIfTruncatedLines(".line-clamp");
-    document.querySelectorAll('.tab-container').forEach(function (el, idx) {
-        setupTabComponent(el, 'tab-component-' + (idx + 1));
-    });
-    window.setupTabComponent = setupTabComponent;
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener("DOMContentLoaded", initTabComponents);
-} else {
-    initTabComponents();
-}
-
-window.addEventListener('hashchange', function () {
-    document.querySelectorAll('.tab-container').forEach(function (el) {
-        if (el.setupTabComponentInstance) {
-            el.setupTabComponentInstance.activateTabByHash();
-        }
-    });
-});
-
-window.addEventListener('load', function () {
-    document.querySelectorAll('.tab-container').forEach(function (el) {
-        if (el.setupTabComponentInstance) {
-            el.setupTabComponentInstance.activateTabByHash();
-        }
-    });
-});
-
-function setupTabComponent(componentElement, componentId) {
-    let tabs = componentElement.querySelectorAll(".tabs a, .tabs > div");
-    const tabContent = componentElement.querySelectorAll(".tab-content");
-    const tabContentContainers = componentElement.querySelectorAll(".tab-content-container");
-
-    // Helper: Activate tab/content by index
-    function activateTabByIndex(index) {
-        tabs.forEach((t) => t.classList.remove("active"));
-        componentElement.querySelectorAll('.navLink, .tab').forEach((t) => t.classList.remove('active'));
-        tabContent.forEach((content) => content.classList.remove("active"));
-        tabContentContainers.forEach((container) => container.classList.remove("active"));
-
-        if (tabs[index]) {
-            tabs[index].classList.add("active");
-            if (tabs[index].classList.contains('navLink') || tabs[index].classList.contains('tab')) {
-                tabs[index].classList.add('active');
-            }
-        }
-        if (tabContent[index]) tabContent[index].classList.add("active");
-        if (tabContentContainers[index]) tabContentContainers[index].classList.add("active");
-    }
-
-    // Helper: Activate tab/content by tabId (string, without #)
-    function activateTabById(tabId) {
-        tabs.forEach((t) => t.classList.remove("active"));
-        componentElement.querySelectorAll('.navLink, .tab').forEach((t) => t.classList.remove('active'));
-        tabContent.forEach((content) => content.classList.remove("active"));
-        tabContentContainers.forEach((container) => container.classList.remove("active"));
-
-        let tabToActivate = null;
-        let contentIndex = -1;
-        const normalizedTabId = (tabId || '').trim().toLowerCase();
-
-        tabs.forEach((tab, i) => {
-            let href = tab.getAttribute('href');
-            let normalizedHref = href ? href.replace('#', '').trim().toLowerCase() : '';
-            if (normalizedHref && normalizedHref === normalizedTabId) {
-                tabToActivate = tab;
-                contentIndex = i;
-            }
-        });
-
-        let foundContentIndex = -1;
-        tabContent.forEach((content, idx) => {
-            let normalizedContentId = (content.id || '').trim().toLowerCase();
-            if (normalizedContentId === normalizedTabId) {
-                foundContentIndex = idx;
-            }
-        });
-if (!tabToActivate && tabs.length > 0 && !tabId) {
-            tabToActivate = tabs[0];
-            contentIndex = 0;
-        }
-
-        let activateIndex = foundContentIndex !== -1 ? foundContentIndex : contentIndex;
-        if (tabToActivate && activateIndex !== -1 && tabContent[activateIndex] && tabContentContainers[activateIndex]) {
-            tabToActivate.classList.add("active");
-            if (tabToActivate.classList.contains('navLink') || tabToActivate.classList.contains('tab')) {
-                tabToActivate.classList.add('active');
-            }
-            tabContent[activateIndex].classList.add("active");
-            tabContentContainers[activateIndex].classList.add("active");
-            return true;
-        }
-        return false;
-    }
-
-    // Activate tab based on hash if available
-    function activateTabByHash() {
-        // Clear any default .active from HTML first so hash tab wins (avoids first-tab flash)
-        tabs.forEach((t) => t.classList.remove("active"));
-        componentElement.querySelectorAll('.navLink, .tab').forEach((t) => t.classList.remove("active"));
-        tabContent.forEach((c) => c.classList.remove("active"));
-        tabContentContainers.forEach((c) => c.classList.remove("active"));
-        const hash = window.location.hash.trim();
-        if (hash && hash.length > 1) {
-            const tabId = hash.replace('#', '');
-            const found = activateTabById(tabId);
-            if (!found) {
-                return;
-            }
-        }
-
-        if (!window.location.hash && tabs.length > 0) {
-            activateTabByIndex(0);
-        }
-    }
-
-    // Initial activation by hash
-    activateTabByHash();
-    componentElement.classList.add('tabs-initialized');
-
-    // On click, use href/id mapping
-    tabs.forEach((tab, idx) => {
-        addTooltipIfTruncatedLines(".line-clamp");
-        tab.addEventListener('click', (e) => {
-            let href = tab.getAttribute("href");
-            let hasUniqueHref = href && href !== '#' && href.trim() !== '';
-            if (tab.tagName.toLowerCase() === 'a' && hasUniqueHref) {
-                e.preventDefault();
-                const tabId = href.replace('#', '');
-                window.location.hash = tabId;
-                activateTabById(tabId);
-            } else {
-                e.preventDefault();
-                activateTabByIndex(idx);
-            }
-        });
-    });
-
-    componentElement.setupTabComponentInstance = {
-        activateTabByHash
-    };
-}
-
-$(document).on("click", ".tabs", function (event) {
-    const anchorTag = event.target.getAttribute("target");
-    const contentType = anchorTag === "_blank" ? "external" : "internal";
-    const eventModule = event.target.innerText;
-    const subTitle = "sub tab";
-    trackButtonEvent(eventModule, "", subTitle, "");
-});
-
-function trackButtonEvent(eventName, mainTitle, subTitle, contentType) {
-    const evenInfo = {
-        eventAction: 'click',
-        eventSelection: eventName,
-        eventModule: mainTitle,
-        eventPageArea: subTitle,
-        contentType: contentType
-    };
-    console.log(evenInfo);
-    adobeAnalytics.setEventInfo(evenInfo);
-    adobeAnalytics.trackEventAction();
-}
